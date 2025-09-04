@@ -1,0 +1,6 @@
+1‑D wave – version 2 (return-style helpers)
+Time stepping: 2.430 s
+Energy calc:   1.979 s
+Energy plot:   5.745 s
+GIF render:    43.258 s
+Total:         53.412 s

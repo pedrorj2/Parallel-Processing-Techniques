@@ -1,0 +1,79 @@
+% This file is included by main.tex
+
+\chapter{Introduction}
+\label{ch::chapter1}
+
+\vspace{-1cm}
+
+\section{Objectives and Scope of the Study}
+
+This bachelor thesis conducts a comprehensive analysis of computational performance in numerical computing, with particular emphasis on understanding the Operation to Data Ratio and its implications for matrix-vector versus matrix-matrix formulations. The study is structured around two fundamental blocks.
+
+\vspace{-1em}
+
+\subsubsection*{Block I: Synthetic Performance Analysis}
+
+\begin{itemize}
+    \item \textbf{CPU Performance Analysis:} Detailed study of single-core and multi-core CPU performance characteristics, comparing matrix-vector and matrix-matrix operations. Analysis includes memory bandwidth limitations and cache hierarchies.
+    
+    \item \textbf{GPU Performance Analysis:} Parallel examination of GPU architectures, exploring the same matrix operation comparisons with focus on memory coalescing, thread occupancy, and throughput-oriented design advantages.
+    
+    \item \textbf{CPU vs GPU Comparative Study:} Direct performance comparison between architectures, identifying scenarios where each excels and understanding the fundamental architectural differences that drive performance characteristics.
+\end{itemize}
+
+\vspace{-1em}
+
+\subsubsection*{Block II: Real-World Application}
+
+\begin{itemize}
+    \item \textbf{Wave Equation Solver:} Implementation of 1D and 2D wave equation solvers as representative computational physics problems requiring intensive numerical operations.
+    
+    \item \textbf{Global Interpolation Formulation:} Development of interpolation matrices that can operate on both vector and matrix data structures, providing a direct testbed for comparing operation types as in synthetic benchmarks.
+    
+    \item \textbf{Performance Validation:} Verification that real-world applications exhibit the same performance characteristics observed in synthetic benchmarks.
+\end{itemize}
+
+\vspace{0.5em}
+
+This dual-block approach ensures that performance insights gained from controlled synthetic benchmarks translate meaningfully to practical computational scenarios.
+
+\clearpage
+
+\section{How to Navigate this Bachelor Thesis}
+
+This bachelor thesis is designed as an interactive computational document that combines traditional academic exposition with hands-on experimentation. Rather than merely presenting results, this work enables readers to reproduce, verify, and extend every computational experiment on their own hardware.
+
+\subsection*{Repository Structure and Philosophy}
+
+The accompanying repository mirrors the structure of this document, with each chapter and section corresponding to executable code modules. This design philosophy ensures that:
+
+\begin{itemize}
+    \item Every benchmark can be reproduced on the reader's local machine
+    \item Architecture-specific differences can be explored and compared
+    \item Performance claims are immediately verifiable rather than taken on faith
+    \item Code implementations are transparent and available for modification
+\end{itemize}
+
+\subsection*{Interactive Exploration}
+
+The repository includes a launcher script (\texttt{main.jl}) that provides an interactive menu system mirroring this thesis structure. Readers can:
+
+\begin{enumerate}
+    \item Navigate through synthetic performance benchmarks (Chapters 2-5)
+    \item Execute wave equation solvers with different formulations (Chapters 6-8)
+    \item Compare their hardware performance against the baseline results presented here
+    \item Modify parameters to explore performance boundaries on their specific systems
+\end{enumerate}
+
+\subsection*{Getting Started}
+
+To begin exploring:
+
+\begin{enumerate}
+    \item Install Julia following the setup guide in \hyperref[sec::JuliaSetup]{Appendix A.1}
+    \item Clone the bachelor thesis repository from the provided link
+    \item Execute \texttt{main.jl} from the root directory
+    \item Use the interactive menu to navigate and execute any section of interest
+\end{enumerate}
+
+This approach transforms the traditional thesis reading experience into an active computational investigation, where theoretical concepts are immediately testable and performance claims are subject to empirical verification on the reader's own hardware.

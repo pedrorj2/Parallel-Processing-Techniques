@@ -1,0 +1,6 @@
+1‑D wave – version 3 (state tensor U)
+Time stepping: 2.598 s
+Energy calc:   1.976 s
+Energy plot:   5.630 s
+GIF render:    42.147 s
+Total:         52.351 s

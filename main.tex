@@ -1,0 +1,134 @@
+% --------------------------
+% CREDITS:
+% I used the "UPM_thesis_template_en" template from Overaleaf and modified it to fit my needs for my final degree project.
+% https://www.overleaf.com/latex/templates/upm-thesis-template-en/nzjnspqsxfmm
+% --------------------------
+
+% --------------------------
+% Document class
+% --------------------------
+\documentclass[
+twoside,                % onesite or twoside printing
+openright,              % doublepage cleaning ends up right side
+12pt,                   % font size
+]{book}
+
+% **************************************************
+% THESIS details
+% **************************************************
+
+\newcommand{\University}{\protect{Universidad Polit\'ecnica de Madrid}}
+\newcommand{\UNIVERSITY}{\protect{UNIVERSIDAD POLIT\'ECNICA DE MADRID}}
+
+\input{thesisDetails}
+
+% **************************************************
+% Settings
+% **************************************************
+
+\input{settings}
+
+% Add microtype for better typography and fewer overfull/underfull boxes
+\usepackage{microtype}
+
+% **************************************************
+% Begin document
+% **************************************************
+\begin{document}
+% Use \raggedbottom to reduce underfull vbox warnings
+\raggedbottom
+
+% --------------------------
+% Cover and front matter
+% --------------------------
+\frontmatter
+\pagestyle{empty}				    % no header nor footer
+\input{frontmatter/1_cover}
+\newpage
+\cleardoublepage
+
+\input{frontmatter/2_frontpage}
+\newpage
+
+\pagenumbering{roman}			    % roman page numbering
+\pagestyle{plain}				    % empty header, just page number in footer
+\input{frontmatter/3_dedication}
+
+
+% \input{frontmatter/4_acknowledgement_and_funding}   % dedication & cknowledgement (optional)
+% \cleardoublepage
+
+\input{frontmatter/5_abstract}  % abstract (in English and Spanish)
+\newpage
+
+
+
+\selectlanguage{english}
+
+\setcounter{tocdepth}{3}		% define depth of toc
+\cleardoublepage
+\newpage
+\tableofcontents                % Display table of contents
+\newpage
+
+% \listoffigures
+% \newpage
+
+% \listoftables
+% \newpage
+
+
+\cleardoublepage
+
+
+% --------------------------
+% Main matter
+% --------------------------
+\mainmatter
+\pagenumbering{arabic}			% arabic page numbering
+\setcounter{page}{1}			% set page counter
+\pagestyle{fancy} 	            % fancy header and footer
+\parskip=7pt                    % space after each paragraph
+\parindent=0pt                  % suppress indentation of paragraphs
+
+\pagestyle{fancy} 	            % fancy header and footer
+\setlength{\headheight}{14.49998pt} % set head height to avoid fancyhdr warning
+\addtolength{\topmargin}{-2.49998pt} % adjust top margin to compensate
+
+% Chapters
+\include{mainmatter/1_introduction}
+\include{mainmatter/2_foundational_concepts}
+\include{mainmatter/3_cpu}
+\include{mainmatter/4_gpu}
+\include{mainmatter/5_cpu_vs_gpu}
+\include{mainmatter/6_state_formulation}
+\include{mainmatter/7_global_interpolation}
+\include{mainmatter/8_wave_equation_solvers}
+\include{mainmatter/9_conclusions}
+
+\cleardoublepage
+
+% --------------------------
+% Back matter
+% --------------------------
+\backmatter
+
+\appendix
+\renewcommand{\thechapter}{\Alph{chapter}} % Capítulos como A, B, C...
+\renewcommand{\thesection}{\thechapter.\arabic{section}} % Secciones como A.1, A.2...
+\include{mainmatter/x-Appendix}
+
+\newpage
+
+\input{frontmatter/6_acronyms}
+\newpage
+
+\nocite{*}
+% \bibliographystyle{cas-model2-names}
+\bibliographystyle{unsrt} 
+\bibliography{references.bib}
+
+% **************************************************
+% End of document
+% **************************************************
+\end{document}

@@ -1,0 +1,6 @@
+1‑D wave (explicit Euler) timings
+Time stepping: 118.479 s
+Energy calc:   83.803 s
+Energy plot:   5.938 s
+GIF render:    47.033 s
+Total:         255.253 s

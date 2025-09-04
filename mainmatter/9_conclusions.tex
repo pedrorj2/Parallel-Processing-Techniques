@@ -1,0 +1,59 @@
+% This file is included by main.tex
+
+\chapter{Conclusions}
+
+\label{ch::chapter9}
+
+\vspace{-1cm}
+
+\section{Key Findings and Contributions}
+
+This thesis has conducted a comprehensive investigation into the computational performance characteristics of matrix-vector (MxV) and matrix-matrix (MxM) operations within the context of numerical partial differential equation solvers, with particular emphasis on wave equation implementations across CPU and GPU architectures.
+
+\subsection*{Fundamental Performance Insights}
+
+The central hypothesis of this work (that matrix-matrix formulations achieve superior computational efficiency due to higher arithmetic intensity) has been rigorously validated through both synthetic benchmarks and real-world PDE applications. The theoretical analysis presented in Chapter~\ref{ch::chapter2} established that MxM operations achieve operational intensity scaling as $\mathcal{O}(N)$, while MxV operations saturate at approximately 2 FLOPS per data element. This fundamental difference manifests consistently across all architectural platforms investigated.
+
+On CPU architectures, our benchmarks demonstrate that MxM operations achieve sustained performance approaching theoretical peaks, while MxV operations remain constrained by memory bandwidth limitations, typically plateauing regardless of problem size.
+
+The GPU analysis reveals even more pronounced performance differentials, with MxM operations achieving up to a 30x speedup for large matrices, while MxV performance remains severely bandwidth-bound at substantially lower levels, but still benefits from the higher memory bandwidth of the GPU architecture, allowing up to 10x speedups.
+
+\subsection*{Practical Implications for PDE Solvers}
+
+The transition from 1D to 2D wave equation implementations provides a compelling demonstration of these performance principles in practice. The 1D solver, inherently dominated by matrix-vector operations for spatial differentiation, exhibits characteristic memory-bound behavior with modest GFLOPS rates that plateau as grid resolution increases. In contrast, the 2D matrix-matrix implementation leverages optimized BLAS routines to achieve significant performance improvements, validating the theoretical predictions in a realistic computational physics context.
+
+Particularly noteworthy is the comparison with the reference Fortran implementation from NumericalHub. Despite Fortran's reputation for computational efficiency, our Julia matrix-matrix solver consistently outperforms the reference implementation, demonstrating that algorithmic formulation choices can overcome language-level performance differences.
+
+\subsection*{Architectural Performance Characteristics}
+
+The cross-platform analysis reveals distinct performance profiles across architectures.
+
+CPU implementations benefit significantly from cache-friendly data access patterns in MxM operations, while suffering from cache misses effects in MxV kernels.
+
+GPU architectures amplify these trends: the massive parallelism inherent in GPUs can only be effectively utilized when sufficient arithmetic intensity allows compute units to remain occupied while memory operations proceed in parallel.
+
+The investigation of memory hierarchy effects, including detailed analysis of cache set conflicts and bandwidth limitations, provides valuable insights for performance optimization. The identification of specific grid sizes that trigger cache thrashing (e.g., multiples of 128 for FP32 operations) offers practical guidance for computational grid design.
+
+\subsection*{Global Interpolation as a Unifying Framework}
+
+The development of the global interpolation framework in Chapters~\ref{ch::chapter7} and~\ref{ch::chapter8} represents a significant methodological contribution. By pre-computing differentiation matrices using Lagrange basis polynomials, the framework transforms the traditional node-by-node stencil applications into highly optimized matrix operations. This approach not only improves computational efficiency but also provides a flexible foundation for achieving arbitrary-order accuracy and handling non-uniform grids through Chebyshev node distributions.
+
+The iterative Lagrange polynomial implementation enables efficient computation of high-order differentiation matrices while maintaining numerical stability. The resulting solver architecture clearly separates the physics (encoded in the state tensor $\mathbf{U}$ and physical vector $\mathbf{F}$) from the numerical implementation, facilitating code modularity and extensibility.
+
+\section{Limitations and Scalability Challenges}
+
+The primary constraint lies in the explicit time integration scheme employed throughout this work. The CFL stability condition necessitates time step reductions proportional to spatial grid refinement, resulting in computational cost that scales as $\mathcal{O}(N^4)$ for 2D problems when both spatial and temporal resolutions are considered.
+
+This scaling limitation becomes prohibitive for large-scale simulations (N > 500), where the number of required time steps grows exponentially with grid refinement. Consequently, while MxM operations provide significant per-timestep performance improvements, the overall computational advantage can be offset by stability-imposed time step restrictions in explicit schemes. Additionally, the performance benefits of MxM formulations require sufficiently large matrix dimensions to amortize computational overhead.
+
+\section{Future Work}
+
+\subsection*{Advanced Temporal Integration Schemes}
+
+The most significant limitation of our current approach stems from the use of the explicit Euler method for temporal integration. This simple first-order scheme, while straightforward to implement and understand, imposes severe stability restrictions through the CFL (Courant-Friedrichs-Lewy) condition. When the spatial grid becomes finer (larger $N$), the time step $\Delta t$ must be reduced proportionally to maintain numerical stability.
+
+The path forward requires investigation of temporal integration schemes with significantly larger stability regions. Unlike explicit methods that restrict time steps based on the finest spatial scale, more advanced schemes could allow much larger time steps while maintaining numerical stability.
+
+\subsection*{Full GPU Implementation}
+
+The natural extension of this work involves full GPU implementation of the wave equation solvers using CUDA.jl and cuBLAS. Preliminary analysis suggests that GPU memory bandwidth (448 GB/s on RTX 3070) could provide substantial improvements for memory-bound operations, while the massive parallelism would dramatically accelerate compute-bound MxM kernels.

@@ -1,0 +1,22 @@
+# Archivos de LaTeX que deben ignorarse
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.synctex.gz
+*.toc
+
+# Ignorar archivos en carpetas específicas
+build/frontmatter/*
+build/mainmatter/*
+
+# Excepción: mantener el PDF principal en control de versiones
+!build/mainmatter/main.pdf
+
+# Ignorar PDF específico de interpolación polinómica
+**/Interpolacion_polinomica_23b.pdf

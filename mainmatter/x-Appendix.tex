@@ -1,0 +1,133 @@
+\chapter{Appendix}
+\label{ch::Appendix}
+
+\setcounter{chapter}{1}
+
+\section{Julia programming language initial setup}
+\label{sec::JuliaSetup}
+
+This study will be implemented using the Julia programming language.
+This section provides an overview of the initial setup required to start programming in Julia.
+
+The Julia programming language is a high-level, high-performance language designed for
+numerical and scientific computing. It is known for its speed and ease of use, making
+it an ideal choice for developing computational applications. This section provides an
+overview of the initial setup required to start programming in Julia.
+
+\subsection{Installation}
+
+The first step in setting up Julia is to download and install the latest version of the language
+from the official website (\url{https://julialang.org/downloads/}). The installation process is
+straightforward and involves running the installer and following the on-screen instructions.
+
+This will enable you to run Julia code from the command line but to take full advantage, we will use
+Visual Studio Code and the Julia extension for Visual Studio Code.
+
+\subsection{Package Management in Julia}
+
+Managing packages efficiently is essential when working on different Julia projects. Julia provides a built-in package manager, \texttt{Pkg}, which allows users to install, update, and manage dependencies. However, to ensure reproducibility and avoid conflicts between projects, it is best to use project-specific environments.
+
+Each Julia project organizes its dependencies using two key files:
+\begin{itemize}
+    \item \textbf{\texttt{Project.toml}}: Specifies the direct dependencies of the project.
+    \item \textbf{\texttt{Manifest.toml}}: Stores the full list of installed packages, including exact versions.
+\end{itemize}
+
+Working with project environments ensures that each project has its own set of dependencies,
+preventing conflicts between different projects. You will just need the \textbf{\texttt{Project.toml}} file to recreate the environment.
+
+
+\subsubsection*{Automating Package Management}
+
+To automate package management tasks such as activating environments, resolving
+dependencies, and installing required packages, we can use the \texttt{setup.jl} script.
+
+\lstinputlisting[language=Julia, caption=setup.jl]{code/1_annexes/setup.jl}
+
+
+\section{System Information and Hardware Overview}
+
+It's important to know the system and hardware specifications to know the upper limits of the hardware so that we can compare the results obtained in the benchmarks.
+
+The following code snippets were extracted from the \texttt{system\_info.jl} script, which provides information about the system and hardware specifications.
+This script is used to gather information about the system and hardware specifications, such as the operating system, CPU, and GPU details \cite{GPUComputeCapability}.
+
+Function \texttt{cpu\_info(true)} returns the CPU max GFLOPS and function \texttt{gpu\_info(true)} return the GPU max GFLOPS. Using the \texttt{false} argument leds to print the hardware information on the screen.
+
+\begin{lstlisting}[language=Julia, caption=CPU function system\_info.jl]
+function cpu_info(return_max_gflops=false)
+    N_cores = num_physical_cores()
+    N_threads = num_virtual_cores()
+    cpuid = cpuinfo()
+    string_cpuid = string(cpuid)
+    cpu_frequency = 3.7  # GHz (Adjust as needed)
+    AVX_value = get_avx_value(string_cpuid)
+    M_ops = 4  # 2 FMA, 2 operations each (multiply-add) (AVX2)
+
+    if return_max_gflops
+        if AVX_value > 0
+            Theoretical_time = 1e9 / (cpu_frequency * 1e9 * AVX_value * M_ops * N_cores)
+            max_gflops = 1 / Theoretical_time
+            return max_gflops
+        else
+            return 0
+        end
+    else
+        println("CPU Information")
+        println(" ")
+        println("CPU Cores: ", N_cores)
+        println("CPU Threads: ", N_threads)
+        println("CPU Frequency: ", cpu_frequency, " GHz           (GHz adjusted manually)")
+        println("AVX support: ", occursin("256 bit", string_cpuid))
+        println("AVX-512 support: ", occursin("512 bit", string_cpuid))
+        println("AVX Value: ", AVX_value)
+        println("M_ops: ", M_ops, " (AVX2: 2 FMA, 2 operations each (multiply-add))")
+        if AVX_value > 0
+            Theoretical_time = 1e9 / (cpu_frequency * 1e9 * AVX_value * M_ops * N_cores)
+            max_gflops = 1 / Theoretical_time
+            println("CPU Theoretical max GFLOPS: ", round(max_gflops, digits=2), " GFLOPS (using base frequency)")
+        else
+            println("AVX not supported. Cannot compute theoretical GFLOPS.")
+        end
+    end
+end
+\end{lstlisting}
+
+\begin{lstlisting}[language=Julia, caption=GPU function system\_info.jl]
+function gpu_info(return_max_gflops=false)
+    device = CUDA.device()
+    capability = CUDA.capability(device)
+    sm_count = CUDA.attribute(device, CUDA.DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT)
+    cores_per_sm = cuda_cores_per_sm(capability)
+    total_cuda_cores = sm_count * cores_per_sm
+    clock_rate = CUDA.attribute(device, CUDA.DEVICE_ATTRIBUTE_CLOCK_RATE) / 1e6
+
+    max_gflops = 2 * clock_rate * total_cuda_cores
+    
+    memory_clock_khz = CUDA.attribute(device, CUDA.DEVICE_ATTRIBUTE_MEMORY_CLOCK_RATE)
+    bus_width_bits = CUDA.attribute(device, CUDA.DEVICE_ATTRIBUTE_GLOBAL_MEMORY_BUS_WIDTH)
+    memory_clock_ghz = (memory_clock_khz / 1e6) * 2
+    memory_bandwidth = memory_clock_ghz * (bus_width_bits / 8)  # GB/s (8 bits = 1 byte)
+
+    if return_max_gflops
+        return max_gflops
+    else
+        println("GPU Information")
+        println(" ")
+        println("GPU Name: ", CUDA.name(device))
+        println("GPU Compute Capability: ", capability.major, ".", capability.minor, " (", get_GPU_architecture(capability), ")")
+        println("GPU Memory: ", round(CUDA.totalmem(device) / 1e9, digits=2), " GB")
+        println("GPU Memory: ", round(CUDA.totalmem(device) / 2^30, digits=2), " GiB")
+        println("GPU Memory Bandwidth: ", round(memory_bandwidth, digits=2), " GB/s")
+        println("GPU Streaming Multiprocessor (SM) Count: ", sm_count)
+        println("CUDA Cores per SM: ", cores_per_sm)
+        println("Total CUDA Cores: ", total_cuda_cores)
+        println("GPU Clock Rate: ", clock_rate, " GHz")
+        println("GPU Theoretical max GFLOPS: ", round(max_gflops, digits=2), " GFLOPS")
+    end
+end
+\end{lstlisting}
+
+It's important to modify the \texttt{system\_info.jl} script to include any additional hardware information you want to display and customize parameters as the \texttt{cpu\_frequency} or \texttt{M\_ops}.
+
+\clearpage

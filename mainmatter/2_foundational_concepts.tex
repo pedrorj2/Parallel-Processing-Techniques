@@ -1,0 +1,143 @@
+% This file is included by main.tex
+
+\chapter{Fundamentals of Computational Performance}
+\label{ch::chapter2}
+
+\vspace{-1cm}
+
+\section{Operation to data ratio: Operational Intensity}
+
+As already said, there is an inherent limitation in matrix-vector multiplication (which is not due to CPU capacity but rather a data access bottleneck issue). This limitation arises because the operation-to-data ratio in matrix-matrix operation is higher than in a matrix-vector operation.
+
+This hypothesis emerged during a collaboration grant where the GPU-Parallel Repository was developed and made available on GitHub~\cite{jahrwork}.
+
+In matrix-vector multiplication, the number of computations that can be performed per data element fetched from memory is low, meaning the processor often waits for data to arrive rather than performing calculations. This is known as being \textit{memory-bound}.
+
+In contrast, matrix-matrix multiplication has a much higher operation-to-data ratio, allowing the processor to perform more computations per data element loaded, thus better utilizing computational resources and reducing the impact of memory bandwidth limitations.
+
+The operation-to-data ratio is a measure of how many computations can be performed relative to the amount of data that needs to be accessed from memory. This is also often referred to as \textbf{operational intensity}. A higher operation-to-data ratio indicates that more computations are being performed for each data element accessed, which is generally more efficient and leads to better performance in computational tasks.
+
+This chapter will analyze and compare these ratios in the context of matrix-vector and matrix-matrix operations, demonstrating the advantages of matrix-matrix computations in exploiting parallelism effectively.
+
+\clearpage
+
+\subsection{Matrix-Vector Multiplication}
+
+\begin{equation}
+	\begin{bmatrix}
+		a_{11} & \hdots & a_{1N} \\ 
+		\vdots & \ddots & \vdots \\ 
+		a_{N1} & \hdots & a_{NN}
+	\end{bmatrix}
+	\begin{bmatrix}
+		b_{1}  \\ 
+		\vdots \\ 
+		b_{N}
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		c_{1}  \\ 
+		\vdots \\ 
+		c_{N}
+	\end{bmatrix}
+\end{equation}
+
+\vspace{0.25cm}
+
+In matrix-vector multiplication, each element of the resulting vector \(c_i\) is computed as:
+\begin{equation}
+c_i = \sum_{j=1}^{N} a_{ij} \cdot b_j
+\end{equation}
+This requires \(N\) multiplications and \(N-1\) additions, resulting in \(2N-1\) operations per element of the resulting vector.
+
+Since the resulting vector has \(N\) elements, the total number of operations becomes:
+\begin{equation}
+N_{ops} = N \cdot (2N-1) \approx 2N^2 \quad \text{(for large \(N\))}
+\end{equation}
+
+The data involved are: the matrix \(A\) with \(N^2\) elements, the input vector \(b\) with \(N\) elements, and the output vector \(c\) that must be written (\(N\) elements). Therefore:
+\begin{equation}
+N_{\text{data}} = N^2 + 2N.
+\end{equation}
+
+\subsection{Matrix-Matrix Multiplication}
+
+\begin{equation}
+	\begin{bmatrix}
+		d_{11} & \hdots & d_{1N} \\ 
+		\vdots & \ddots & \vdots \\ 
+		d_{N1} & \hdots & d_{NN}
+	\end{bmatrix}
+	\begin{bmatrix}
+		e_{11} & \hdots & e_{1N} \\ 
+		\vdots & \ddots & \vdots \\ 
+		e_{N1} & \hdots & e_{NN}
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		f_{11} & \hdots & f_{1N} \\ 
+		\vdots & \ddots & \vdots \\ 
+		f_{N1} & \hdots & f_{NN}
+	\end{bmatrix}
+\end{equation}
+
+\vspace{0.25cm}
+
+In matrix-matrix multiplication, each element of the resulting matrix \(c_{ij}\) is computed as:
+\begin{equation}
+f_{ij} = \sum_{k=1}^{N} d_{ik} \cdot e_{kj}
+\end{equation}
+This requires \(N\) multiplications and \(N-1\) additions, resulting in \(2N-1\) operations per element of the resulting matrix.
+
+Since the resulting matrix has \(N^2\) elements, the total number of operations becomes:
+\begin{equation}
+N_{ops} = N^2 \cdot (2N-1) \approx 2N^3 \quad \text{(for large \(N\))}
+\end{equation}
+
+With the same \emph{ideal} assumption on data movement, the matrix inputs \(D\) and \(E\) must be read and the matrix output \(F\) must be written:
+\begin{equation}
+N_{\text{data}} = N^2 + N^2 + N^2 = 3N^2.
+\end{equation}
+
+
+\subsection{Comparison of Operation to Data Ratio}
+\label{subsec::operation_data_ratio}
+
+The comparison shows that matrix–matrix multiplication achieves a much higher operation-to-data ratio than matrix–vector multiplication. Under ideal reuse,
+\[
+\text{MxV:}\quad \frac{N_{\text{ops}}}{N_{\text{data}}}
+= \frac{2N^2}{N^2 + 2N} \xrightarrow[N\to\infty]{} 2,
+\qquad
+\text{MxM:}\quad \frac{N_{\text{ops}}}{N_{\text{data}}}
+= \frac{2N^3}{3N^2} = \tfrac{2}{3}N.
+\]
+Thus MxM’s intensity grows linearly with \(N\), whereas MxV’s intensity saturates near \(2\).
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{|c|c|c|}
+        \hline
+        \textbf{ } & \textbf{Matrix–Vector (MxV)} & \textbf{Matrix–Matrix (MxM)} \\
+        \hline
+        Total Operations (\(N_{\text{ops}}\)) & \(2N^{2}\) & \(2N^{3}\) \\
+        \hline
+        Total Data Elements (ideal \(N_{\text{data}}\)) & \(N^{2}+2N\) & \(3N^{2}\) \\
+        \hline
+        \rowcolor[gray]{0.9}
+        \textbf{Operation-to-Data Ratio} & {\boldmath$\displaystyle 2$} & {\boldmath$\displaystyle \tfrac{2}{3}N$} \\
+        \hline
+    \end{tabular}
+    \caption{Operation-to-data ratio under ideal reuse.}
+    \label{table:operation_data_ratio}
+\end{table}
+
+The operation-to-data ratio, or operational intensity, has profound implications for the computational performance of matrix-vector (MxV) and matrix-matrix (MxM) multiplications in real-world scenarios. This ratio directly influences whether a computation is \textit{memory-bound} or \textit{compute-bound}, which in turn affects overall efficiency, scalability, and hardware utilization.
+
+In MxV multiplication, the low operational intensity (approaching 2 as \(N\) increases) means that the algorithm is typically memory-bound. The processor spends a significant portion of time waiting for data to be fetched from memory rather than performing arithmetic operations. This bottleneck is exacerbated in systems with limited memory bandwidth, leading to underutilization of computational cores. For large \(N\), performance scales poorly with additional compute resources because the limiting factor is data transfer rates, not floating-point operations per second (FLOPS). In practice, this results in MxV achieving only a fraction of the peak theoretical performance on modern hardware.
+
+On the other hand, MxM multiplication benefits from a high operational intensity that scales linearly with \(N\) (\(\frac{2}{3}N\)). This allows for better data reuse within caches or registers, reducing memory accesses and enabling the computation to become compute-bound. With sufficient problem size, MxM can fully exploit the arithmetic capabilities of the processor, leading to higher throughput and efficiency. Optimized libraries like BLAS (Basic Linear Algebra Subprograms) leverage this by implementing blocked algorithms that maximize cache locality, further amplifying the performance advantages.
+
+In general, achieving a high operation-to-data ratio is crucial for efficiency because it minimizes time spent on data movement and maximizes computational throughput~\cite{modernjulia}.
+
+In the following sections, we will explore these impacts in greater detail across different hardware architectures.

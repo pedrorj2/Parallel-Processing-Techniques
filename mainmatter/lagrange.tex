@@ -1,0 +1,672 @@
+\chapter{Lagrange Interpolation and Finite–Difference Operators}
+\label{ch:chapter6}
+
+\section{From State Formulation to Spatial Discretization}
+
+We introduced a structured approach to numerical methods through the lens of state evolution:
+\[
+\mathbf{U}^{n+1} = \mathbf{U}^n + \Delta t\, \mathbf{F}.
+\]
+This formulation clearly separates the temporal integration scheme, the physical state tensor \(\mathbf{U}\), and the dynamics encoded in the physical vector \(\mathbf{F}\).
+
+So far, we have assumed that the spatial derivatives involved in \(\mathbf{F}\) (such as the Laplacian) are already discretized. But how exactly are these spatial operators constructed? How do we compute second derivatives in space in a way that is both accurate and compatible with our modular update rule?
+
+\begin{quote}
+This chapter answers that question by building the discrete Laplacian matrix \(D\) from first principles, using Lagrange interpolation polynomials as the foundation.
+\end{quote}
+
+We will see how the discrete operator \(D\) arises naturally by:
+\begin{enumerate}
+  \item Interpolating the unknown function \(U(x)\) locally using Lagrange polynomials through neighboring grid points,
+  \item Differentiating the resulting polynomial to obtain finite-difference approximations of spatial derivatives,
+  \item Assembling these coefficients into a sparse matrix \(D\) that acts on the vector of unknowns.
+\end{enumerate}
+
+This approach not only reproduces classical three-point formulas for second derivatives (tridiagonal Laplacian), but also generalizes to higher-order stencils and non-uniform grids. It gives us full control over accuracy and locality of the discretization, while remaining fully compatible with the state-tensor update logic introduced in Chapter~\ref{ch::chapter4}.
+
+
+\section{1D 3 node case Lagrange interpolant }
+\label{sec::3_nodeLagrange}
+
+\subsection{Non-equispaced case}
+
+Consider three nodes \(x_0, x_1, x_2\). The Lagrange basis polynomials are
+\[
+\begin{aligned}
+\ell_0(x) &= \frac{(x-x_1)(x-x_2)}{(x_0-x_1)(x_0-x_2)}, \qquad
+\ell_1(x) &= \frac{(x-x_0)(x-x_2)}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2(x) &= \frac{(x-x_0)(x-x_1)}{(x_2-x_0)(x_2-x_1)}.
+\end{aligned}
+\]
+
+\subsubsection{First derivatives of Lagrange polynomials}
+
+The first derivatives are, using the product rule for the numerator:
+\[
+\begin{aligned}
+\ell_0'(x) &= \frac{[(x-x_1)(x-x_2)]'}{(x_0-x_1)(x_0-x_2)}
+= \frac{(x-x_1)'(x-x_2) + (x-x_1)(x-x_2)'}{(x_0-x_1)(x_0-x_2)} \\[1.5ex]
+&= \frac{1\cdot(x-x_2) + (x-x_1)\cdot 1}{(x_0-x_1)(x_0-x_2)}
+= \frac{2x - x_1 - x_2}{(x_0-x_1)(x_0-x_2)}.
+\end{aligned}
+\]
+Similarly,
+\[
+\ell_1'(x) = \frac{2x - x_0 - x_2}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2'(x) = \frac{2x - x_0 - x_1}{(x_2-x_0)(x_2-x_1)}.
+\]
+
+\vspace{2em}
+
+Evaluating at the \(x_0\) node:
+\[
+\ell_0'(x_0) = \frac{2x_0 - x_1 - x_2}{(x_0-x_1)(x_0-x_2)}, \qquad
+\ell_1'(x_0) = \frac{x_0 - x_2}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2'(x_0) = \frac{x_0 - x_1}{(x_2-x_0)(x_2-x_1)}
+\]
+
+\vspace{2em}
+
+Evaluating at the \(x_1\) node:
+\[
+\ell_0'(x_1) = \frac{x_1 - x_2}{(x_0-x_1)(x_0-x_2)}, \qquad
+\ell_1'(x_1) = \frac{2x_1 - x_0 - x_2}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2'(x_1) = \frac{x_1 - x_0}{(x_2-x_0)(x_2-x_1)}
+\]
+
+\vspace{2em}
+
+Evaluating at the \(x_2\) node:
+\[
+\ell_0'(x_2) = \frac{x_2 - x_1}{(x_0-x_1)(x_0-x_2)}, \qquad
+\ell_1'(x_2) = \frac{x_2 - x_0}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2'(x_2) = \frac{2x_2 - x_0 - x_1}{(x_2-x_0)(x_2-x_1)}
+\]
+
+\vspace{0.5em}
+
+\newpage
+
+\subsubsection{Second derivatives of Lagrange polynomials}
+We can se that the first derivative follow a pattern:
+
+\[
+\ell_j'(x) = \frac{2x - x_k - x_m}{(x_j - x_k)(x_j - x_m)}, \qquad \{j,k,m\} = \{0,1,2\},\ j \ne k \ne m.\\[1.5ex]
+\]
+
+\vspace{0.5em}
+
+Since the numerator of each \(\ell_j'(x)\) is linear, its second derivative is constant and equal to:
+
+
+\[
+\begin{aligned}
+\ell_0''(x) &= \frac{2}{(x_0-x_1)(x_0-x_2)}, \qquad
+\ell_1''(x) &= \frac{2}{(x_1-x_0)(x_1-x_2)}, \qquad
+\ell_2''(x) &= \frac{2}{(x_2-x_0)(x_2-x_1)}
+\end{aligned}
+\]
+
+\vspace{0.5em}
+
+This leads to the following approximations for the first and second derivatives of \(f\) at any node \(x_i\):
+\[
+f'(x_i) \approx f_0\,\ell_0'(x_i) + f_1\,\ell_1'(x_i) + f_2\,\ell_2'(x_i)
+\]
+
+\[
+f''(x_i) \approx f_0\,\ell_0''(x_i) + f_1\,\ell_1''(x_i) + f_2\,\ell_2''(x_i)
+\]
+
+\vspace{1em}
+
+\subsection{Equispaced case}
+
+We now specialize the previous results to the case of three \textbf{equispaced nodes}, where
+\[
+x_0 = x_i - \Delta x, \qquad x_1 = x_i, \qquad x_2 = x_i + \Delta x.
+\]
+
+In this setting, the Lagrange basis polynomials and their derivatives simplify due to symmetry.
+
+
+We recall the expressions for the first derivatives of the Lagrange basis polynomials:
+\[
+\ell_j'(x_i) = \frac{2x_i - x_k - x_m}{(x_j - x_k)(x_j - x_m)}, \qquad \{j,k,m\} = \{0,1,2\},\ j \ne k \ne m.
+\]
+
+
+\[
+\ell_j''(x_i) = \frac{2}{(x_j - x_k)(x_j - x_m)} , \qquad \{j,k,m\} = \{0,1,2\},\ j \ne k \ne m.
+\]
+
+\newpage
+
+\subsubsection{First derivative at node \(x_i\)}
+
+\paragraph{Step 1: \(\ell_0'(x_i)\)}
+\[
+\ell_0'(x_i) = \frac{2x_i - x_1 - x_2}{(x_0 - x_1)(x_0 - x_2)} = \frac{2x_i - x_i - (x_i + \Delta x)}{(-\Delta x)(-2\Delta x)} = \frac{x_i - x_i - \Delta x}{2\Delta x^2} = -\frac{1}{2\Delta x}
+\]
+
+\paragraph{Step 2: \(\ell_1'(x_i)\)}
+\[
+\ell_1'(x_i) = \frac{2x_i - x_0 - x_2}{(x_1 - x_0)(x_1 - x_2)} = \frac{2x_i - (x_i - \Delta x) - (x_i + \Delta x)}{\Delta x \cdot (-\Delta x)} = \frac{0}{-\Delta x^2} = 0
+\]
+
+\paragraph{Step 3: \(\ell_2'(x_i)\)}
+\[
+\ell_2'(x_i) = \frac{2x_i - x_0 - x_1}{(x_2 - x_0)(x_2 - x_1)} = \frac{2x_i - (x_i - \Delta x) - x_i}{2\Delta x \cdot \Delta x} = \frac{\Delta x}{2\Delta x^2} = \frac{1}{2\Delta x}
+\]
+
+\paragraph{Conclusion:}
+
+The first derivative of a function \(f\) at \(x_i\) is approximated by:
+\[
+f'(x_i) \approx \ell_0'(x_i)\,f(x_{i-1}) + \ell_1'(x_i)\,f(x_i) + \ell_2'(x_i)\,f(x_{i+1})
+\]
+\[
+f'(x_i) \approx -\frac{1}{2\Delta x} f(x_{i-1}) + 0 \cdot f(x_i) + \frac{1}{2\Delta x} f(x_{i+1})
+= \frac{f(x_{i+1}) - f(x_{i-1})}{2\Delta x}
+\]
+
+
+This is the classical second-order centered finite difference approximation for the first derivative.
+
+\subsubsection{Second derivative at node \(x_i\)}
+
+\[
+\ell_0''(x_i) = \frac{2}{(x_0 - x_1)(x_0 - x_2)}, \qquad
+\ell_1''(x_i) = \frac{2}{(x_1 - x_0)(x_1 - x_2)}, \qquad
+\ell_2''(x_i) = \frac{2}{(x_2 - x_0)(x_2 - x_1)}
+\]
+
+\paragraph{Step 1: \(\ell_0''(x_i)\)}
+\[
+\ell_0''(x_i) = \frac{2}{(-\Delta x)(-2\Delta x)} = \frac{2}{2\Delta x^2} = \frac{1}{\Delta x^2}
+\]
+
+\paragraph{Step 2: \(\ell_1''(x_i)\)}
+\[
+\ell_1''(x_i) = \frac{2}{\Delta x \cdot (-\Delta x)} = -\frac{2}{\Delta x^2}
+\]
+
+\paragraph{Step 3: \(\ell_2''(x_i)\)}
+\[
+\ell_2''(x_i) = \frac{2}{2\Delta x \cdot \Delta x} = \frac{2}{2\Delta x^2} = \frac{1}{\Delta x^2}
+\]
+
+\paragraph{Conclusion:}
+
+\[
+f''(x_i) \approx \ell_0''(x_i)\,f(x_{i-1}) + \ell_1''(x_i)\,f(x_i) + \ell_2''(x_i)\,f(x_{i+1})
+\]
+\[
+\Rightarrow f''(x_i) \approx \frac{1}{\Delta x^2} f(x_{i-1}) - \frac{2}{\Delta x^2} f(x_i) + \frac{1}{\Delta x^2} f(x_{i+1})
+= \frac{f(x_{i-1}) - 2f(x_i) + f(x_{i+1})}{\Delta x^2}
+\]
+
+This is the three-point centered finite difference approximation for the second derivative.
+
+\subsection{Assembly of the discrete Laplacian matrix D (3 nodes)}
+
+Using the three-point finite difference formula derived above:
+\[
+f''(x_i) \approx \frac{f(x_{i+1}) - 2f(x_i) + f(x_{i-1})}{\Delta x^2},
+\]
+we can now construct a matrix \(D \in \mathbb{R}^{(N+1) \times (N+1)}\) that applies this operation to the vector of values
+\[
+\mathbf{f} = \begin{bmatrix}
+f(x_0) \\ f(x_1) \\ \vdots \\ f(x_N)
+\end{bmatrix}.
+\]
+
+Each interior row of \(D\) encodes the coefficients:
+\[
+\frac{1}{\Delta x^2} \cdot \left[ f(x_{i-1}) - 2f(x_i) + f(x_{i+1}) \right].
+\]
+
+This leads to a tridiagonal matrix of the form:
+
+\[
+D_{3\text{pt}} = \frac{1}{\Delta x^2} \cdot
+\begin{bmatrix}
+-2 & 1 & 0 & 0 & \cdots & 0 & 0 \\
+1 & -2 & 1 & 0 & \cdots & 0 & 0 \\
+0 & 1 & -2 & 1 & \cdots & 0 & 0 \\
+\vdots & \ddots & \ddots & \ddots & \ddots & \vdots & \vdots \\
+0 & 0 & \cdots & 1 & -2 & 1 & 0 \\
+0 & 0 & \cdots & 0 & 1 & -2 & 1 \\
+0 & 0 & \cdots & 0 & 0 & 1 & -2
+\end{bmatrix}
+\]
+
+where each interior row \(i\) contains the values \(\left[1,\ -2,\ 1\right]\) in positions \(i-1\), \(i\), and \(i+1\),
+respectively.
+
+\newpage
+
+
+\section{1D 5 node case Lagrange interpolant}
+\label{sec::5_nodeLagrange}
+
+\subsection{Non-equispaced case}
+
+Consider five nodes \(x_0, x_1, x_2, x_3, x_4\). The Lagrange basis polynomials are
+
+\[
+\begin{aligned}
+\ell_0(x)&=\frac{(x-x_1)(x-x_2)(x-x_3)(x-x_4)}
+               {(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)},\\[1ex]
+\ell_1(x)&=\frac{(x-x_0)(x-x_2)(x-x_3)(x-x_4)}
+               {(x_1-x_0)(x_1-x_2)(x_1-x_3)(x_1-x_4)},\\[1ex]
+\ell_2(x)&=\frac{(x-x_0)(x-x_1)(x-x_3)(x-x_4)}
+               {(x_2-x_0)(x_2-x_1)(x_2-x_3)(x_2-x_4)},\\[1ex]
+\ell_3(x)&=\frac{(x-x_0)(x-x_1)(x-x_2)(x-x_4)}
+               {(x_3-x_0)(x_3-x_1)(x_3-x_2)(x_3-x_4)},\\[1ex]
+\ell_4(x)&=\frac{(x-x_0)(x-x_1)(x-x_2)(x-x_3)}
+               {(x_4-x_0)(x_4-x_1)(x_4-x_2)(x_4-x_3)}.
+\end{aligned}
+\]
+
+\subsubsection{First derivatives of Lagrange polynomials}
+
+Applying the product rule to the numerator of each~\(\ell_j\):
+
+\[
+\begin{aligned}
+\ell_0'(x) &=
+\frac{\begin{aligned}
+&(x-x_2)(x-x_3)(x-x_4) + (x-x_1)(x-x_3)(x-x_4)\\
+&\quad + (x-x_1)(x-x_2)(x-x_4) + (x-x_1)(x-x_2)(x-x_3)
+\end{aligned}}
+{(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)}
+\\[1.6ex]
+%
+\ell_1'(x) &=
+\frac{\begin{aligned}
+&(x-x_2)(x-x_3)(x-x_4) + (x-x_0)(x-x_3)(x-x_4)\\
+&\quad + (x-x_0)(x-x_2)(x-x_4) + (x-x_0)(x-x_2)(x-x_3)
+\end{aligned}}
+{(x_1-x_0)(x_1-x_2)(x_1-x_3)(x_1-x_4)}
+\\[1.6ex]
+%
+\ell_2'(x) &=
+\frac{\begin{aligned}
+&(x-x_1)(x-x_3)(x-x_4) + (x-x_0)(x-x_3)(x-x_4)\\
+&\quad + (x-x_0)(x-x_1)(x-x_4) + (x-x_0)(x-x_1)(x-x_3)
+\end{aligned}}
+{(x_2-x_0)(x_2-x_1)(x_2-x_3)(x_2-x_4)}
+\\[1.6ex]
+%
+\ell_3'(x) &=
+\frac{\begin{aligned}
+&(x-x_1)(x-x_2)(x-x_4) + (x-x_0)(x-x_2)(x-x_4)\\
+&\quad + (x-x_0)(x-x_1)(x-x_4) + (x-x_0)(x-x_1)(x-x_2)
+\end{aligned}}
+{(x_3-x_0)(x_3-x_1)(x_3-x_2)(x_3-x_4)}
+\\[1.6ex]
+%
+\ell_4'(x) &=
+\frac{\begin{aligned}
+&(x-x_1)(x-x_2)(x-x_3) + (x-x_0)(x-x_2)(x-x_3)\\
+&\quad + (x-x_0)(x-x_1)(x-x_3) + (x-x_0)(x-x_1)(x-x_2)
+\end{aligned}}
+{(x_4-x_0)(x_4-x_1)(x_4-x_2)(x_4-x_3)}
+\end{aligned}
+\]
+
+
+\textbf{Evaluation at the central node \(x_2\):}
+All terms containing the factor \((x-x_2)\) vanish:
+\[
+\begin{aligned}
+\ell_0'(x_2)&=\frac{(x_2-x_1)(x_2-x_3)(x_2-x_4)}
+                   {(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)},\\[2.0ex]
+\ell_1'(x_2)&=\frac{(x_2-x_0)(x_2-x_3)(x_2-x_4)}
+                   {(x_1-x_0)(x_1-x_2)(x_1-x_3)(x_1-x_4)},\\[2.0ex]
+\ell_2'(x_2) &= \frac{(x_2 - x_1)(x_2 - x_3)(x_2 - x_4) 
+                + (x_2 - x_0)(x_2 - x_3)(x_2 - x_4) }{(x_2 - x_0)(x_2 - x_1)(x_2 - x_3)(x_2 - x_4)} \\
+       & + \frac{(x_2 - x_0)(x_2 - x_1)(x_2 - x_4) 
+                + (x_2 - x_0)(x_2 - x_1)(x_2 - x_3)}{(x_2 - x_0)(x_2 - x_1)(x_2 - x_3)(x_2 - x_4)},\\[2.0ex]
+\ell_3'(x_2)&=\frac{(x_2-x_0)(x_2-x_1)(x_2-x_4)}
+                   {(x_3-x_0)(x_3-x_1)(x_3-x_2)(x_3-x_4)},\\[2.0ex]
+\ell_4'(x_2)&=\frac{(x_2-x_0)(x_2-x_1)(x_2-x_3)}
+                   {(x_4-x_0)(x_4-x_1)(x_4-x_2)(x_4-x_3)}.
+\end{aligned}
+\]
+
+Thus, for the first derivative at the central node,
+\[
+f'(x_2)\;\approx\;f_0\,\ell_0'(x_2)+f_1\,\ell_1'(x_2)
+              +f_2\,\ell_2'(x_2)+f_3\,\ell_3'(x_2)+f_4\,\ell_4'(x_2).
+\]
+
+\subsubsection{Second derivatives of Lagrange polynomials}
+
+The first derivative denominator is a constant that depends only on the node positions. The numerator is a sum of cubic terms. Each term is a product of three factors of the form \((x - x_k)\), and when we differentiate this sum again to get \(\ell_j''(x)\), we apply the product rule one more time.
+
+Each cubic term like \((x - x_a)(x - x_b)(x - x_c)\) gives the following derivative:
+
+\[
+(x - x_b)(x - x_c) + (x - x_a)(x - x_c) + (x - x_a)(x - x_b).
+\]
+
+So the second derivative of \(\ell_j(x)\) becomes:
+
+\[
+\ell_j''(x) =
+\frac{
+\displaystyle 2 \sum_{\substack{a < b \\ a,b \neq j}} (x - x_a)(x - x_b)
+}{
+\displaystyle\prod_{\substack{k=0\\ k \neq j}}^4 (x_j - x_k)
+}.
+\]
+
+This means we go through all possible pairs of nodes excluding \(x_j\), multiply the corresponding \((x - x_a)(x - x_b)\), sum them all, multiply by 2, and divide by the same constant denominator as before.
+
+\vspace{1em}
+
+\subsubsection*{Second derivatives evaluated at the central node $x_2$}
+
+Setting $x=x_2$ in the previous expression removes every factor that
+contains $(x-x_2)$ and yields
+
+\[
+\begin{aligned}
+\ell_0''(x_2) &=
+\frac{2\bigl[(x_2-x_1)(x_2-x_3)
+            +(x_2-x_1)(x_2-x_4)
+            +(x_2-x_3)(x_2-x_4)\bigr]}
+     {(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)},\\[1.2ex]
+%
+\ell_1''(x_2) &=
+\frac{2\bigl[(x_2-x_0)(x_2-x_3)
+            +(x_2-x_0)(x_2-x_4)
+            +(x_2-x_3)(x_2-x_4)\bigr]}
+     {(x_1-x_0)(x_1-x_2)(x_1-x_3)(x_1-x_4)},\\[1.2ex]
+%
+\ell_2''(x_2) &=
+\frac{2\bigl[(x_2-x_0)(x_2-x_1)
+            +(x_2-x_0)(x_2-x_3)
+            +(x_2-x_0)(x_2-x_4)\bigr]}     % ← abre corchete
+     {(x_2-x_0)(x_2-x_1)(x_2-x_3)(x_2-x_4)} \\[0.5ex]
+&\quad
++\frac{2\bigl[(x_2-x_1)(x_2-x_3)
+            +(x_2-x_1)(x_2-x_4)
+            +(x_2-x_3)(x_2-x_4)\bigr]}
+     {(x_2-x_0)(x_2-x_1)(x_2-x_3)(x_2-x_4)},\\[2.0ex]%
+\ell_3''(x_2) &=
+\frac{2\bigl[(x_2-x_0)(x_2-x_1)
+            +(x_2-x_0)(x_2-x_4)
+            +(x_2-x_1)(x_2-x_4)\bigr]}
+     {(x_3-x_0)(x_3-x_1)(x_3-x_2)(x_3-x_4)},\\[1.2ex]
+%
+\ell_4''(x_2) &=
+\frac{2\bigl[(x_2-x_0)(x_2-x_1)
+            +(x_2-x_0)(x_2-x_3)
+            +(x_2-x_1)(x_2-x_3)\bigr]}
+     {(x_4-x_0)(x_4-x_1)(x_4-x_2)(x_4-x_3)}.
+\end{aligned}
+\]
+
+Therefore, on an arbitrary (possibly non-uniform) five-point stencil,
+
+\[
+f''(x_2)\;\approx\;
+f_0\,\ell_0''(x_2) \;+\;
+f_1\,\ell_1''(x_2) \;+\;
+f_2\,\ell_2''(x_2) \;+\;
+f_3\,\ell_3''(x_2) \;+\;
+f_4\,\ell_4''(x_2).
+\]
+
+\vspace{1em}
+
+\subsection{Equispaced case}
+
+We now specialize the previous results to the case of five \textbf{equispaced nodes}, where
+\[
+x_{0} = x_i - 2\Delta x,\qquad
+x_{1} = x_i - \Delta x,\qquad
+x_{2} =x_i,\qquad
+x_{3} = x_i + \Delta x,\qquad
+x_{4} = x_i + 2\Delta x.
+\]
+
+\subsubsection{First derivative at node \(x_i\)}
+
+\[
+\ell_0'(x_i)=
+\frac{(x_i-x_1)(x_i-x_3)(x_i-x_4)}
+     {(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)}
+=
+\frac{(\Delta x)(-\Delta x)(-2\Delta x)}{(+24)\,\Delta x^{4}}
+= \frac{1}{12\Delta x} .
+\]
+
+\[
+\ell_1'(x_i)=
+\frac{(x_i-x_0)(x_i-x_3)(x_i-x_4)}
+     {(x_1-x_0)(x_1-x_2)(x_1-x_3)(x_1-x_4)}
+=
+\frac{( \!\!-\!\Delta x)(-\Delta x)(-2\Delta x)}{(-\,18)\,\Delta x^{4}}
+=-\,\frac{2}{3\Delta x}.
+\]
+
+\clearpage
+
+Because the cubic numerator of \(\ell_2\) contains two factors
+\((x-x_2)\), every term vanishes at \(x_i\):
+\[
+\ell_2'(x_i)=0 .
+\]
+
+
+By symmetry, \qquad \(\ell_3'(x_i)=-\ell_1'(x_i)=\dfrac{2}{3\Delta x}\) \qquad  and \qquad \(\ell_4'(x_i)=-\ell_0'(x_i)=-\dfrac{1}{12\Delta x}\).
+
+\paragraph{Conclusion}
+
+The first derivative of \(f\) at the central node \(x_i\) can therefore be written as
+
+\[
+f'(x_i)\;\approx\;
+\frac{1}{12\Delta x}f_{i-2}
+-\frac{2}{3\Delta x}f_{i-1}
++0\cdot f_i
++\frac{2}{3\Delta x}f_{i+1}
+-\frac{1}{12\Delta x}f_{i+2}
+\]
+
+\[
+f'(x_i)\;\approx\;
+\frac{1}{12\Delta x}f_{i-2}
+-\frac{8}{12\Delta x}f_{i-1}
++0\cdot f_i
++\frac{8}{12\Delta x}f_{i+1}
+-\frac{1}{12\Delta x}f_{i+2}
+\]
+
+\[
+f'(x_i)\;\approx\;
+\frac{-\,f_{i+2}+8f_{i+1}-8f_{i-1}+f_{i-2}}{12\Delta x}
+\]
+
+\subsubsection{Second derivative at node \(x_i\)}
+
+We now construct the second derivative of the Lagrange interpolant evaluated at the central node $x_i$. 
+\[
+\begin{aligned}
+\ell_0''(x_i)
+  &=\frac{2\hspace{0.35em}\!\big[(x_i-x_1)(x_i-x_3)+(x_i-x_1)(x_i-x_4)+(x_i-x_3)(x_i-x_4)\big]}
+          {(x_0-x_1)(x_0-x_2)(x_0-x_3)(x_0-x_4)}\\[4pt]
+  &=\frac{2\hspace{0.35em}\!\big[(\Delta x)(-\Delta x)+(\Delta x)(-2\Delta x)+(-\Delta x)(-2\Delta x)\big]}
+          {(-\Delta x)(-2\Delta x)(-3\Delta x)(-4\Delta x)}\\[4pt]
+  &=\frac{2\hspace{0.35em}\!\big[-\Delta x^{2}-2\Delta x^{2}+2\Delta x^{2}\big]}
+          {24\Delta x^{4}}
+   =\frac{-2\Delta x^{2}}{24\Delta x^{4}}
+   =-\frac{1}{12\Delta x^{2}},\\[1.2ex]
+\end{aligned}
+\]
+
+and, by the same procedure, we obtain:
+
+\[
+\begin{aligned}
+\ell_1''(x_i) &= \phantom{-}\dfrac{4}{3\Delta x^{2}}, \qquad \qquad
+\ell_2''(x_i) &= -\dfrac{5}{2\Delta x^{2}},\\
+\ell_3''(x_i) &= \phantom{-}\dfrac{4}{3\Delta x^{2}}, \qquad \qquad
+\ell_4''(x_i) &= -\dfrac{1}{12\Delta x^{2}}.
+\end{aligned}
+\]
+
+Putting all together:
+
+\[
+f''(x_i) \approx
+-\frac{1}{12\Delta x^2} f_{i-2} +
+\frac{4}{3\Delta x^2} f_{i-1} -
+\frac{5}{2\Delta x^2} f_i +
+\frac{4}{3\Delta x^2} f_{i+1} -
+\frac{1}{12\Delta x^2} f_{i+2}.
+\]
+
+\[
+f''(x_i) \approx
+-\frac{1}{12\Delta x^2} f_{i-2} +
+\frac{16}{12\Delta x^2} f_{i-1} -
+\frac{30}{12\Delta x^2} f_i +
+\frac{16}{12\Delta x^2} f_{i+1} -
+\frac{1}{12\Delta x^2} f_{i+2}.
+\]
+
+\clearpage
+
+\subsection{Assembly of the discrete Laplacian matrix D (5 nodes)}
+
+Using the five-point finite–difference formula derived above,
+\[
+f''(x_i)\;\approx\;
+\frac{-\,f(x_{i+2}) + 16\,f(x_{i+1}) - 30\,f(x_i)
+      + 16\,f(x_{i-1}) -\,f(x_{i-2})}{12\,\Delta x^{2}},
+\]
+we construct a matrix
+\(D \in \mathbb{R}^{(N+1)\times(N+1)}\) that applies this operation to
+the vector of nodal values
+\[
+\mathbf{f} \;=\;
+\begin{bmatrix}
+f(x_0) \\ f(x_1) \\ \vdots \\ f(x_N)
+\end{bmatrix}.
+\]
+
+Each interior row of \(D\) contains the coefficients
+\[
+\frac{1}{12\Delta x^{2}}
+\bigl[\,-1,\;16,\;-30,\;16,\,-1\,\bigr]
+\quad\text{in positions } i-2,\;i-1,\;i,\;i+1,\;i+2.
+\]
+
+This produces the pentadiagonal matrix
+
+\[
+D_{5\text{pt}}
+=\frac{1}{12\,\Delta x^{2}}
+\begin{bmatrix}
+-30 &  16 &  -1 &   0 &   0 &   0 & \cdots &   0 &   0 \\
+ 16 & -30 &  16 &  -1 &   0 &   0 & \cdots &   0 &   0 \\
+ -1 &  16 & -30 &  16 &  -1 &   0 & \cdots &   0 &   0 \\
+  0 &  -1 &  16 & -30 &  16 &  -1 & \ddots & \vdots & \vdots \\
+  0 &   0 &  -1 &  16 & -30 &  16 & \ddots &   0 &   0 \\
+  0 &   0 &   0 &  -1 &  16 & -30 & \ddots &  -1 &   0 \\
+\vdots & \vdots & \ddots & \ddots & \ddots & \ddots & \ddots &  16 &  -1 \\
+  0 &   0 &   0 & \cdots &   0 &  -1 &  16 & -30 &  16 \\
+  0 &   0 &   0 & \cdots &   0 &   0 &  -1 &  16 & -30
+\end{bmatrix}.
+\]
+
+
+\newpage
+
+\section{1D N+1 node case Lagrange Interpolant}
+
+We now extend the three- and five-point constructions to an arbitrary stencil of \(N+1\) nodes
+\[
+x_0,\;x_1,\;\dots,\;x_N,
+\]
+which need not be uniformly spaced.  Our goal is to build
+
+At the heart of the construction lies the family of Lagrange basis polynomials,
+\[
+\ell_j(x)
+\;=\;
+\prod_{\substack{m=0\\m\neq j}}^{N}
+\frac{x - x_m}{x_j - x_m},
+\qquad j = 0,1,\dots,N.
+\]
+
+\subsection{First derivative weights}
+
+To differentiate \(\ell_j\), we apply the logarithmic derivative trick or, equivalently, expand the product rule:
+\[
+\ell_j'(x)
+=
+\sum_{\substack{k=0\\k\neq j}}^{N}
+\Bigg[\,
+\frac{1}{x_j - x_k}
+\;\prod_{\substack{m=0\\m\neq j,k}}^{N}
+\frac{x - x_m}{\,x_j - x_m\,}
+\Bigg].
+\]
+Hence, at any node \(x_i\), the first-derivative approximation reads
+\[
+f'(x_i)
+\;\approx\;
+\sum_{j=0}^N
+f(x_j)\,\ell_j'(x_i),
+\]
+
+\subsection{Second derivative weights}
+
+A second differentiation again uses the product rule on \(\ell_j'(x)\).  One finds the compact form
+\[
+\ell_j''(x)
+=
+\sum_{\substack{k<\ell\\k,\ell\neq j}}
+\frac{2}{(x_j - x_k)(x_j - x_\ell)}
+\;\prod_{\substack{m=0\\m\neq j,k,\ell}}^{N}
+\frac{x - x_m}{\,x_j - x_m\,}.
+\]
+Evaluating at \(x = x_i\) yields the second-derivative approximation
+\[
+f''(x_i)
+\;\approx\;
+\sum_{j=0}^N
+f(x_j)\,\ell_j''(x_i),
+\]
+
+\clearpage
+
+\subsection{Assembly of the discrete Laplacian matrix \(\boldsymbol{D}\) (\((N+1)\) nodes)}
+
+In the most general setting, the discrete second-derivative operator is assembled by collecting, for each node \(x_i\), the weights \(\ell_j''(x_i)\) that multiply the function values \(f(x_j)\).  Concretely, one defines
+\[
+D_{(N+1)\text{pt}}
+\;=\;
+\bigl[D_{ij}\bigr]_{i,j=0}^N
+\qquad \qquad
+D_{ij} = \ell_j''(x_i)
+\]
+so that the vector of approximate second derivatives satisfies
+\(\mathbf{f}''\approx D\,\mathbf{f}\).  By construction, \(D\) has dimension \((N+1)\times(N+1)\), and its \(i\)th row encodes exactly the finite-difference formula
+\[
+f''(x_i)\;\approx\;\sum_{j=0}^N \ell_j''(x_i)\,f(x_j)
+\]
+
+When the full \((N+1)\)-point Lagrange interpolant is used at every \(x_i\), each weight \(\ell_j''(x_i)\) is generally nonzero for all \(j\), and \(D\) becomes a dense matrix of bandwidth \(N+1\).  Such a global operator achieves the maximal formal order of accuracy for a given number of nodes, but its storage and application both incur \(\mathcal O(N^2)\) cost.  In large-scale computations this quadratic growth quickly dominates, making dense operators impractical unless \(N\) remains small.
+
+As the stencil size grows from \(3\) to \(5\) to \(\dots\) to \(N+1\) nodes, the matrix \(D\) gradually fills successive off-diagonals until it becomes fully dense.  In practice, fixed-width stencils (e.g.\ three- or five-point schemes) are preferred for their sparsity, whereas higher-order or global approaches are reserved for problems where extreme accuracy outweighs the \(\mathcal O(N^2)\) expense. This flexible framework seamlessly unifies all such finite-difference constructions under the umbrella of Lagrange interpolation.
+
+Although we have been using the one dimension approach for pedagogical clarity, all numerical experiments and performance benchmarks will be conducted using the two‐dimensional wave equation.  In two dimensions, the discrete Laplacian naturally splits into a sum of Kronecker‐product terms, which we implement via two consecutive matrix–matrix products.  This enables a direct, fair comparison of the MxM formulation against the conventional MxV approach, and will clearly demonstrate the computational advantages of the MxM strategy in large‐scale simulations.
+
+\clearpage

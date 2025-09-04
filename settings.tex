@@ -1,0 +1,144 @@
+% **************************************************
+% Settings
+% **************************************************
+% --------------------------
+% Packages
+% --------------------------
+\usepackage[spanish,english,es-tabla]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}     % Use a modern font (that is not pixelated)
+\usepackage[protrusion=true, expansion=true]{microtype}  % Use microtype to improve readability
+\usepackage{amsmath,amssymb} 
+\usepackage{tabularx}    % tables spanning the full text width
+\usepackage{multicol}    % multi-columns in tables
+\usepackage{multirow}    % multi-rows in tables
+\usepackage{longtable}   % tables spanning more than one page
+\usepackage{booktabs}    % nicer horizontal rules in tables
+\usepackage{colortbl}    % color in tables
+\usepackage{array}       % custom column widths in tables
+\usepackage{ltablex}
+\usepackage{setspace}
+\usepackage{tikz}
+\usetikzlibrary{matrix, arrows.meta, positioning}                % drawing custom shapes
+\usepackage{graphicx,graphics}   % packages to manage images
+\usepackage{subfigure}           % display two figures next to each other
+\usepackage[export]{adjustbox}
+\usepackage{ragged2e} 
+\usepackage{comment} 
+\usepackage{blindtext}
+\usepackage[acronym,nonumberlist,nomain]{glossaries}  % package for list of acronyms
+\usepackage{hyperref}
+\usepackage[a4paper]{geometry}
+\usepackage{parskip}     % paragraph spacing (suppress indentation)
+\usepackage{fancyhdr}    % customize header and footer
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{emptypage}   % no headers in empty pages
+\usepackage[small,hang,bf]{caption}    % caption options
+\usepackage{subcaption}
+\usepackage{csquotes}
+\usepackage{tcolorbox}
+\usepackage{verbatim}
+\usepackage{float}
+\usepackage{afterpage}
+\usepackage{soul}
+\usepackage{titlesec} % to modify titles and sections
+\usepackage{siunitx}
+\usepackage{mdframed}
+\DeclareSIUnit\bit{bit}
+
+
+% Ajuste de la sección con sangría
+\titlespacing*{\section}{0pt}{*0.5}{*0.5}
+\titlespacing*{\subsection}{0pt}{*0.3}{*0.3}
+
+\usepackage[utf8]{inputenc}  
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+
+%%% Added to improve the elegance of reference style
+\usepackage[square,numbers]{natbib}
+
+
+% --------------------------
+% Customize document
+% --------------------------
+% Define the geometry of the document
+\newgeometry {top=2.5cm, bottom=2.5cm, right=2.5cm, left=2.5cm}
+
+\setlength{\parskip}{10pt}   % Change the default value
+
+% hiperlinks
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,       % Enlaces internos en azul
+    urlcolor=blue,       
+    citecolor=blue,
+}
+
+% Header and footer
+\fancyhf{}   % Clear the default header and footer
+\renewcommand{\headrulewidth}{0.2pt}
+ 
+\fancyhead[RO]{\nouppercase \leftmark}  % Define the header for odd and even pages
+\fancyhead[LE]{\thesisAuthor}           % Define the header for odd and even pages
+\fancyfoot[C]{\thepage}
+
+\addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
+
+% Increase indentation in lists
+\newlist{mydescription}{description}{1}
+\setlist[mydescription,1]{labelindent=2em, leftmargin=2em}
+
+% Listings for code blocks in Julia
+\usepackage{listings}
+\usepackage{listingsutf8}
+
+\lstdefinelanguage{Julia}{
+  morekeywords={
+    abstract, break, case, catch, const, continue, do, else, elseif, end, export, false, for, function, immutable, import, in, macro, module, true, try, using, while, struct, mutable, return
+  },
+  sensitive=true,
+  morecomment=[l]\#,
+  morestring=[b]",
+  morestring=[b]',
+}
+
+\lstset{
+    language=Julia,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue}\bfseries,
+    identifierstyle=\color{black},
+    commentstyle=\color{gray},
+    stringstyle=\color[rgb]{0,0.75,0},
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    numbersep=5pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    columns=fullflexible,
+    literate={∇}{{$\nabla$}}1 {²}{{$^2$}}1 {α}{{$\alpha$}}1 {Δ}{{$\Delta$}}1
+           {≤}{{$\leq$}}1 {≥}{{$\geq$}}1 {⁻}{{$^{-}$}}1
+}
+
+\lstset{literate=
+  {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+  {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+  {à}{{\`a}}1 {è}{{\`e}}1 {ì}{{\`i}}1 {ò}{{\`o}}1 {ù}{{\`u}}1
+  {À}{{\`A}}1 {È}{{\`E}}1 {Ì}{{\`I}}1 {Ò}{{\`O}}1 {Ù}{{\`U}}1
+  {ä}{{\"a}}1 {ë}{{\"e}}1 {ï}{{\"i}}1 {ö}{{\"o}}1 {ü}{{\"u}}1
+  {Ä}{{\"A}}1 {Ë}{{\"E}}1 {Ï}{{\"I}}1 {Ö}{{\"O}}1 {Ü}{{\"U}}1
+  {â}{{\^a}}1 {ê}{{\^e}}1 {î}{{\^i}}1 {ô}{{\^o}}1 {û}{{\^u}}1
+  {Â}{{\^A}}1 {Ê}{{\^E}}1 {Î}{{\^I}}1 {Ô}{{\^O}}1 {Û}{{\^U}}1
+  {ã}{{\~a}}1 {ẽ}{{\~e}}1 {ĩ}{{\~i}}1 {õ}{{\~o}}1 {ũ}{{\~u}}1
+  {Ã}{{\~A}}1 {Ẽ}{{\~E}}1 {Ĩ}{{\~I}}1 {Õ}{{\~O}}1 {Ũ}{{\~U}}1
+  {œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
+  {ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
+  {ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {Ø}{{\O}}1 {å}{{\r a}}1 {Å}{{\r A}}1
+  {€}{{\euro}}1 {£}{{\pounds}}1 {«}{{\guillemotleft}}1
+  {»}{{\guillemotright}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1 {¡}{{!`}}1
+  {μ}{{$\mu$}}1 {≠}{$\neq$ }1
+}

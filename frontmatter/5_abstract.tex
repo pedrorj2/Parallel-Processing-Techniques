@@ -1,0 +1,16 @@
+% called by main.tex
+%
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+\label{sec::abstract}
+
+This thesis presents a comprehensive computational performance analysis comparing matrix-vector (MxV) and matrix-matrix (MxM) operations across CPU and GPU architectures, with practical applications to numerical wave equation solvers. The study is motivated by the fundamental limitation that matrix-vector operations suffer from low operational intensity, leading to memory-bound performance, while matrix-matrix operations achieve higher arithmetic intensity and better computational efficiency.
+
+The research is structured in two complementary blocks. Block I conducts systematic synthetic performance benchmarks on both CPU and GPU architectures. Through detailed GFLOPS measurements across varying problem sizes, the study demonstrates that MxM operations consistently outperform MxV operations due to superior operation-to-data ratios. On CPU, MxM operations achieve compute-bound behavior with effective cache utilization, while MxV operations remain memory-bound with limited scaling. GPU results show similar trends but with different performance characteristics due to architectural differences in memory hierarchy and parallel processing capabilities.
+
+Block II validates these findings through real-world applications using wave equation solvers implemented with global interpolation methods. The study develops 1D and 2D wave equation solvers using Lagrange polynomials and differentiation matrices, comparing three computational approaches: (1) 1D solver using matrix-vector formulation, (2) 2D solver using efficient matrix-matrix formulation, and (3) 2D solver using looped matrix-vector operations. Performance measurements confirm that the matrix-matrix approach achieves significantly higher computational efficiency, with the 2D matrix-matrix implementation reaching compute-bound performance while matrix-vector alternatives remain memory-bound.
+
+Key contributions include: (1) comprehensive benchmarking methodology for comparing MxV vs MxM operations across architectures, (2) theoretical and empirical analysis of operational intensity impacts on performance, (3) demonstration of cache hierarchy effects and memory bandwidth limitations, (4) development of high-order accurate wave equation solvers using global interpolation, and (5) validation that synthetic benchmark insights translate directly to practical PDE applications.
+
+The results provide clear evidence that matrix-matrix formulations should be preferred over matrix-vector approaches in numerical algorithms whenever mathematically feasible, offering substantial performance improvements across both CPU and GPU platforms. This work establishes computational guidelines for numerical method design and demonstrates the critical importance of algorithmic structure in achieving optimal performance on modern computing architectures.

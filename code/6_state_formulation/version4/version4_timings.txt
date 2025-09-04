@@ -1,0 +1,6 @@
+1‑D wave – version 4 (state vector U + physical vector F)
+Time stepping: 6.865 s
+Energy calc:   1.845 s
+Energy plot:   5.609 s
+GIF render:    42.635 s
+Total:         56.954 s

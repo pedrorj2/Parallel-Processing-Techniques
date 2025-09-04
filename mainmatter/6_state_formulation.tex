@@ -1,0 +1,324 @@
+\chapter{Wave Equation 1D with 2nd order finite differences}
+\label{ch::chapter6}
+
+\vspace{-1cm}
+
+\section{Introduction to 1D Wave Equation}
+
+We will illustrate this approach using the wave equation as a practical example. The wave equation describes the propagation of waves through a medium and is a fundamental PDE in physics and engineering. It can be expressed in one dimension as:
+\begin{equation}
+\frac{\partial^2 u}{\partial t^2} = c^2 \frac{\partial^2 u}{\partial x^2}, 
+\qquad x\in[0,L],\ t\ge 0,
+\label{eq:wave_equation}
+\end{equation}
+where $u(x,t)$ is the displacement at position $x$ and time $t$, and $c$ is the wave propagation speed.
+
+The initial conditions (IC) are
+\begin{align}
+u(x,0) &= A\,\exp\!\left(-\frac{(x-x_c)^2}{2\sigma^2}\right), \qquad v(x,0) = 0,
+\label{eq:initial_conditions}
+\end{align}
+and we impose homogeneous Dirichlet boundary conditions (BC) on both fields:
+\begin{align}
+u(0,t) = u(L,t) = 0, \qquad
+v(0,t) = v(L,t) = 0, \qquad t\ge 0.
+\label{eq:boundary_conditions}
+\end{align}
+
+The wave equation can be reformulated as a first-order system by introducing an auxiliary variable $v(x,t)$, defined as the first time derivative of $u$:
+\begin{equation}
+v = \frac{\partial u}{\partial t}.
+\label{eq:auxiliary_variable}
+\end{equation}
+
+Differentiating $u$ once in time, and recognizing the wave equation as a second-order ODE in time, we reformulate it as a coupled system of two first-order PDEs:
+\begin{equation}
+\begin{aligned}
+\frac{\partial u}{\partial t} &= v, \\
+\frac{\partial v}{\partial t} &= c^2 \frac{\partial^2 u}{\partial x^2}.
+\end{aligned}
+\label{eq:coupled_system}
+\end{equation}
+
+\clearpage
+
+\subsection{Spatial Discretization: 2nd Order Finite Differences}
+
+We consider a uniform grid $x_i = i \Delta x$ for $i=0,1,\dots,N$, with $\Delta x = L/N$. \\ The second derivative is approximated using a centered stencil as
+\begin{equation}
+\left.\frac{\partial^2 u}{\partial x^2}\right|_{x=x_i} \approx \frac{u_{i-1} - 2u_i + u_{i+1}}{\Delta x^2}, \quad i=1,\dots,N-1,
+\label{eq:second_derivative}
+\end{equation}
+
+where $u_i(t) \approx u(x_i,t)$. We will now show how this approximation is derived using Lagrange interpolation. This method involves creating a simple polynomial that fits the function values at nearby points, and then calculating its second derivative to match the given formula.
+
+
+We approximate $u(x)$ near $x_i$ by the quadratic polynomial $p(x)$ that passes through the points $(x_{i-1}, u_{i-1})$, $(x_i, u_i)$, and $(x_{i+1}, u_{i+1})$, where $x_{i-1} = x_i - \Delta x$, $x_i = i \Delta x$, and $x_{i+1} = x_i + \Delta x$.
+
+The Lagrange polynomial is expressed as
+\begin{equation}
+\begin{aligned}
+p(x) = u_{i-1} \ell_{i-1}(x) + u_i \ell_i(x) + u_{i+1} \ell_{i+1}(x),
+\label{eq:lagrange_polynomial}
+\end{aligned}
+\end{equation}
+
+The Lagrange basis polynomials for points $x_{i-1}$, $x_i$, $x_{i+1}$ are:
+\begin{equation}
+\begin{aligned}
+&\ell_{i-1}(x) = \frac{(x - x_i)(x - x_{i+1})}{(x_{i-1} - x_i)(x_{i-1} - x_{i+1})}, \qquad
+\ell_i(x) = \frac{(x - x_{i-1})(x - x_{i+1})}{(x_i - x_{i-1})(x_i - x_{i+1})} \\ \\
+&\hspace{7em} \ell_{i+1}(x) = \frac{(x - x_{i-1})(x - x_i)}{(x_{i+1} - x_{i-1})(x_{i+1} - x_i)}.
+\end{aligned}
+\label{eq:lagrange_basis}
+\end{equation}
+
+Shift coordinates so $x_i = 0$, $x_{i-1} = -\Delta x$, $x_{i+1} = \Delta x$. The basis polynomials become
+\begin{equation}
+\begin{aligned}
+\ell_{i-1}(x) = \frac{x (x - \Delta x)}{2 \Delta x^2}, \quad
+\ell_i(x) = \frac{\Delta x^2 - x^2}{\Delta x^2}, \quad
+\ell_{i+1}(x) = \frac{x (x + \Delta x)}{2 \Delta x^2}.
+\end{aligned}
+\label{eq:shifted_basis}
+\end{equation}
+
+The second derivative is $p''(x) = u_{i-1} \ell_{i-1}''(x) + u_i \ell_i''(x) + u_{i+1} \ell_{i+1}''(x)$. Compute
+\begin{equation}
+\begin{aligned}
+&\ell_{i-1}''(x) = \frac{d^2}{dx^2} \left( \frac{x^2 - x \Delta x}{2 \Delta x^2} \right) = \frac{1}{\Delta x^2}, \qquad
+\ell_i''(x) = \frac{d^2}{dx^2} \left( 1 - \frac{x^2}{\Delta x^2} \right) = -\frac{2}{\Delta x^2} \\ \\
+&\hspace{7em} \ell_{i+1}''(x) = \frac{d^2}{dx^2} \left( \frac{x^2 + x \Delta x}{2 \Delta x^2} \right) = \frac{1}{\Delta x^2}.
+\end{aligned}
+\label{eq:second_derivatives}
+\end{equation}
+
+At $x = x_i$ (i.e., $x = 0$), 
+\begin{equation}
+\begin{aligned}
+p''(0) = u_{i-1} \cdot \frac{1}{\Delta x^2} + u_i \cdot \left( -\frac{2}{\Delta x^2} \right) + u_{i+1} \cdot \frac{1}{\Delta x^2} = \frac{u_{i-1} - 2u_i + u_{i+1}}{\Delta x^2}.
+\end{aligned}
+\end{equation}
+
+matching the centered stencil \eqref{eq:second_derivative} we shown earlier.
+
+\clearpage
+
+\subsection{Temporal Discretization}
+
+From the coupled system \eqref{eq:coupled_system}, we can define the state vector $\mathbf{U}$  and the physical vector $\mathbf{F}$ as:
+
+\begin{equation}
+\mathbf{U} = \begin{pmatrix} u \\ v \end{pmatrix}, \qquad \mathbf{F} = \begin{pmatrix} v \\ c^2 \frac{\partial^2 u}{\partial x^2} \end{pmatrix}.
+\end{equation}
+
+where $u$ and $v$ are the displacement and velocity fields, respectively. The update rule for the state vector can then be expressed as:
+
+\begin{equation}
+\mathbf{U}^{n+1} = \mathbf{U}^n + \Delta t \, \mathbf{F}^n,
+\end{equation}
+
+\vspace{1em}
+
+This approximation is known as the explicit Euler method. Temporal discretization breaks time into steps (\(\Delta t\)) to approximate the continuous evolution of the system. This process starts by approximating the time derivative of the state vector. Specifically, we use the forward difference
+
+\begin{equation}
+\frac{\partial \mathbf{U}}{\partial t} \approx \frac{\mathbf{U}^{n+1} - \mathbf{U}^n}{\Delta t}, \qquad \text{ and setting it equal to } \mathbf{F}^n
+\label{eq:time_derivative_approx}
+\end{equation}
+
+\vspace{1em}
+
+The explicit Euler method is a first-order accurate time-stepping method. It requires a small \(\Delta t\) for stability and can be adapted to various PDEs with spatial discretization.
+
+This formulation allows us to decouple the physics of the problem from the numerical method used to solve it. The state vector $\mathbf{U}$ contains all relevant information about the system, while the physical vector $\mathbf{F}$ defines the dynamics based on the underlying PDE.
+
+The update rule can be implemented using various numerical methods, such as explicit Euler, implicit Euler, or higher-order Runge-Kutta methods. The choice of method will depend on the specific requirements of the problem, such as stability, accuracy, and computational efficiency.
+
+\clearpage
+
+\section{Code Implementation}
+\label{sec:wave_eqn_implementation}
+
+We evolve the solver through four versions in Julia, each building modularity while solving the same problem (explicit finite differences). Code is in \texttt{code/state\_formulation}. This progression introduces the state vector concept basically, from explicit loops to abstract dynamics, preparing for global interpolation in the next chapter.
+
+\subsection{Explicit Implementation}
+
+This is the most basic and transparent implementation of the wave equation solver.
+
+The update equations for $u$ (displacement) and $v$ (velocity) are written explicitly. No modularity or separation of logic (everything is defined inline). There is no use of state vector formulation or external functions.
+
+Initial conditions (Gaussian displacement, zero velocity):
+\begin{lstlisting}[language=Julia]
+for i in 0:Nx
+    x = i * dx
+    u[i, 0] = A * exp(-((x - x_c)^2) / (2 * sigma^2))
+    v[i, 0] = 0.0
+end
+\end{lstlisting}
+
+Time integration with Dirichlet boundaries:
+\begin{lstlisting}[language=Julia]
+for n in 0:Nt-1
+    u[0, n] = 0.0; u[Nx, n] = 0.0
+    v[0, n] = 0.0; v[Nx, n] = 0.0
+
+    for i in 1:Nx-1
+        u[i, n+1] = u[i, n] + dt * v[i, n]
+        v[i, n+1] = v[i, n] + dt * c^2 * (u[i+1, n] - 2u[i, n] + u[i-1, n]) / dx^2
+    end
+end
+\end{lstlisting}
+
+
+\subsection{Modular Implementation}
+
+In this version, we introduce reusable functions to compute the discrete Laplacian, apply boundary conditions, and set the initial state.
+
+Initial conditions:
+\begin{lstlisting}[language=Julia]
+function apply_initial_conditions(u, v, Nx, dx, A, sigma, x_c)
+    for i in 0:Nx
+        x = i * dx
+        u[i, 0] = A * exp(-((x - x_c)^2) / (2 * sigma^2))
+        v[i, 0] = 0.0
+    end
+    return u, v
+end
+\end{lstlisting}
+
+\clearpage
+
+Boundaries:
+\begin{lstlisting}[language=Julia]
+function apply_dirichlet(u, v, n, Nx)
+    u[0, n] = 0.0
+    u[Nx, n] = 0.0
+    v[0, n] = 0.0
+    v[Nx, n] = 0.0
+    return u, v
+end
+\end{lstlisting}
+
+Laplacian (second derivative):
+\begin{lstlisting}[language=Julia]
+function laplacian_1D(u, Nx, dx)
+    L = OffsetArray(zeros(Nx + 1), 0:Nx)
+    for i in 1:Nx-1
+        L[i] = (u[i+1] - 2u[i] + u[i-1]) / dx^2
+    end
+    return L
+end
+\end{lstlisting}
+
+First derivative (for energy):
+\begin{lstlisting}[language=Julia]
+function derivative_1D(u, Nx, dx)
+    dudx = OffsetArray(zeros(Nx + 1), 0:Nx)
+    for i in 1:Nx-1
+        dudx[i] = (u[i+1] - u[i-1]) / (2 * dx)
+    end
+    return dudx
+end
+\end{lstlisting}
+
+Time loop:
+\begin{lstlisting}[language=Julia]
+u, v = apply_initial_conditions(u, v, Nx, dx, A, sigma, x_c)
+
+for n in 0:Nt-1
+    u, v = apply_dirichlet(u, v, n, Nx)
+    L = laplacian_1D(u[:, n], Nx, dx)
+
+    for i in 1:Nx-1
+        u[i, n+1] = u[i, n] + dt * v[i, n]
+        v[i, n+1] = v[i, n] + dt * c^2 * L[i]
+    end
+end
+\end{lstlisting}
+
+\emph{\textbf{Note:}} The current 3-point stencil (using $u_{i-1}$, $u_i$, $u_{i+1}$) approximates $\partial^2 u / \partial x^2$ with second-order accuracy. Extend to 5-point ( $u_{i-2}$ to $u_{i+2}$ ) for fourth-order, or more. 
+
+In the next chapter advances to global interpolation, building the precomputed matrices $\mathbf{D}_0$ (interpolation), $\mathbf{D}_1$ (first derivative), $\mathbf{D}_2$ (second derivative), with Lagrange polynomials. But for this chapter, we stick to the 3-point stencil.
+
+\newpage
+
+\subsection{State Vector Implementation}
+
+In this version, we introduce a structural change that brings us closer to general-purpose numerical solvers. Instead of working with two separate arrays—one for the displacement $u$ and one for the velocity $v$, we combine both into a single object: the \textbf{state vector} $U$.
+
+\vspace{0.5em}
+\noindent
+We define $U$ as a two-dimensional array that stores the full state of the system at each time step. Its rows are split into two regions:
+\begin{itemize}
+  \item $U[0:Nx, \, :]$ contains the displacement $u$,
+  \item $U[Nx+1:2Nx+1, \, :]$ contains the velocity $v$.
+\end{itemize}
+
+To keep the familiar notation and make the code readable, we create \texttt{views} over $U$:
+
+\begin{lstlisting}[language=Julia]
+N_total = 2 * (Nx + 1)
+U = OffsetArray(zeros(N_total, Nt+1), 0:(N_total-1), 0:Nt)
+u = OffsetArray(@view(U[0:Nx, :]), (0:Nx, 0:Nt))
+v = OffsetArray(@view(U[Nx+1:2Nx+1, :]), (Nx+1:2Nx+1, 0:Nt))
+\end{lstlisting}
+
+From this point on, the entire system evolves through $U$, but we can still refer to $u$ and $v$ as if they were separate fields. This improves clarity without sacrificing structure.
+
+The boundary conditions must also reflect this new layout:
+
+\begin{lstlisting}[language=Julia]
+function apply_dirichlet(u, v, n, Nx)
+    u[0, n] = 0.0
+    u[Nx, n] = 0.0
+    v[Nx+1, n] = 0.0
+    v[2Nx+1, n] = 0.0
+    return u, v
+end
+\end{lstlisting}
+
+Finally, the time-stepping loop is modified to operate on the combined state. Since $v$ is now in the second half of $U$, we must apply an index shift of \texttt{Nx+1} when accessing its values:
+
+\begin{lstlisting}[language=Julia]
+for n in 0:Nt-1
+    u, v = apply_dirichlet(u, v, n, Nx)
+    L = laplacian_1D(u[:, n], Nx, dx)
+
+    for i in 1:Nx-1
+        u[i, n+1] = u[i, n] + dt * v[i + (Nx+1), n]
+        v[i + (Nx+1), n+1] = v[i + (Nx+1), n] + dt * c^2 * L[i]
+    end
+end
+\end{lstlisting}
+
+
+This version maintains the same numerical method as before, but rewrites the solver using a more general and scalable data structure. By adopting a state vector, we open the door to more elegant and powerful formulations.
+
+\subsection{Physical Vector Implementation}
+
+In this final version, we fully adopt the dynamical system structure introduced at the beginning of the chapter. We compute an explicit physical vector $F$ at each time step, which contains the time derivatives of all components of the state. The update rule becomes:
+
+\[
+\mathbf{U}^{n+1} = \mathbf{U}^n + \Delta t\, \mathbf{F}^n
+\]
+
+This approximation, as we already noted, is known as the explicit Euler method.
+
+We use the same state vector layout and each time step, we assemble the physical vector $F$:
+
+\begin{lstlisting}[language=Julia]
+for n in 0:Nt-1
+    u, v = apply_dirichlet(u, v, n, Nx)
+    L = laplacian_1D(u[:, n], Nx, dx)
+
+    @views F[0:Nx] = v[Nx+1:2Nx+1, n]
+    @views F[Nx+1:2Nx+1] = c^2 * L
+
+    @views U[:, n+1] = U[:, n] + dt * F
+end
+\end{lstlisting}
+
+The physical vector $F$ now explicitly represents the right-hand side of the differential equation. Its upper half stores the velocity $v$, while the lower half stores the acceleration $c^2 \cdot \nabla^2 u$.
+
+This structure is clean, extensible, and fully decouples the physics (stored in $F$) from the time-stepping logic. It is a natural starting point for implementing more sophisticated physical models.

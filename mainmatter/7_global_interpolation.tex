@@ -1,0 +1,503 @@
+% This file is included by main.tex
+
+\chapter{Global Interpolation}
+\label{ch::chapter7}
+
+\vspace{-1cm}
+
+\section{Introduction to Global Interpolation}
+
+In numerical methods for partial differential equations (PDEs) such as the wave equation, the accurate approximation of spatial derivatives (e.g., \(\partial u/\partial x\), \(\partial^2 u/\partial x^2\)) on discrete grids is fundamental to solution quality and computational efficiency.
+
+In the previous chapter, we employed explicit 3-node finite difference stencils to approximate derivatives locally. While these stencils are computationally inexpensive and straightforward to implement, they impose several significant limitations like low-order accuracy and rigid grid requirements.
+
+This chapter introduces a fundamentally different approach through \textbf{global interpolation}, implemented via differentiation matrices \(\mathbf{D}_0\), \(\mathbf{D}_1\), and \(\mathbf{D}_2\). Rather than using fixed local stencils, these matrices are constructed using Lagrange basis polynomials that can incorporate information from all grid points simultaneously, hence the term "global."
+
+The key computational advantage of this approach aligns directly with our thesis theme: instead of performing multiple small matrix-vector operations (one per grid point), we can compute all spatial derivatives through a single, large matrix-vector multiplication (in 1D). In 2D this becomes even more pronounced as it is a matrix-matrix multiplication.
+
+The matrices are constructed once at initialization using the Lagrange polynomial algorithm (\texttt{lagrange.jl}), which efficiently computes basis polynomials \(L_j(x)\) and their derivatives \(L_j'(x)\), \(L_j''(x)\) for any desired accuracy order.
+
+We demonstrate the approach using 1D examples, with straightforward extension to multi-dimensional problems. This foundation prepares our solvers for the matrix-matrix formulations that will be crucial for achieving optimal computational performance in the subsequent wave equation implementations.
+
+\clearpage
+
+\section{Lagrange Polynomials}
+
+Lagrange polynomials form the basis for global interpolation. For a set of
+nodes $\{x_k\}_{k=0}^{N_x}$, the Lagrange basis polynomial $L_j(x)$ satisfies
+$L_j(x_k) = \delta_{jk}$. The interpolated function is:
+\begin{equation}
+    u(x) \approx \sum_{j=0}^{N_x} u(x_j) L_j(x).
+\end{equation}
+
+Where the standard product form for $L_j(x)$ is:
+\begin{equation}
+    L_j(x) = \prod_{k=0, k \neq j}^{N_x} \frac{x - x_k}{x_j - x_k}.
+\end{equation}
+
+We use a iterative formulation that builds $L_j(x)$, $L_j'(x)$, and $L_j''(x)$
+incrementally by adding one node at a time to the polynomial from the first
+node up to $N_x$.
+
+This starts with a base case with no nodes (q=0): $L = 1$, $L' = 0$, $L'' = 0$.
+
+For each subsequent node $x_k$ (with $k \neq j$), we update:
+\begin{equation}
+    f(x) = \frac{x - x_k}{x_j - x_k}, \quad f'(x) = \frac{1}{x_j - x_k}, \quad f''(x) = 0.
+\end{equation}
+
+Then, applying the product rule to incorporate this factor into the current
+partial polynomial $L_m(x)$ (built from the first m nodes), we can build the
+polynomial $L(x)$ with $m+1$ nodes:
+\begin{equation}
+    L(x) = L_m(x) \cdot f(x),
+\end{equation}
+\begin{equation}
+    L'(x) = L_m'(x) \cdot f(x) + L_m(x) \cdot f'(x),
+\end{equation}
+\begin{equation}
+    L''(x) = L_m''(x) \cdot f(x) + 2 L_m'(x) \cdot f'(x) + L_m(x) \cdot f''(x).
+\end{equation}
+
+This process is repeated for each node $x_k \neq x_j$, building up to the full
+polynomial. When $k = j$, the factor is skipped (effectively $f=1$, $f'=0$,
+$f''=0$), ensuring $L_j(x_j) = 1$.
+
+Mathematically, let $L^{(q)}(x)$ be the partial Lagrange polynomial after
+including q nodes (excluding $x_j$ itself). The recursion is:
+\begin{align}
+    L^{(0)}(x)     & = 1, \quad {L^{(0)}}'(x) = 0, \quad {L^{(0)}}''(x) = 0                                          \\
+    L^{(q)}(x)     & = L^{(q-1)}(x) \cdot f_q(x)  \label{eq:Lq_iterative}                                                                   \\
+    {L^{(q)}}'(x)  & = {L^{(q-1)}}'(x) \cdot f_q(x) + L^{(q-1)}(x) \cdot f_q'(x)  \label{eq:Lq_derivative}                                    \\
+    {L^{(q)}}''(x) & = {L^{(q-1)}}''(x) \cdot f_q(x) + 2 {L^{(q-1)}}'(x) \cdot f_q'(x) + L^{(q-1)}(x) \cdot f_q''(x) \label{eq:Lq_second_derivative}
+\end{align}
+
+where $f_q(x) = \frac{x - x_{idx_q}}{x_j - x_{idx_q}}$ for the q-th node index
+$idx_q \neq j$, \quad $f_q'(x) = \frac{1}{x_j - x_{idx_q}}$, \quad and
+$f_q''(x) = 0$. \\
+
+This avoids computing large products directly by accumulating derivatives
+step-by-step.
+
+\clearpage
+
+\textbf{Code implementation}
+
+The following Julia code implements an iterative method to compute the Lagrange basis polynomial \( L_j(x) \) and its first and second derivatives (\( L'_j(x) \), \( L''_j(x) \)) at a given point \( x \), using a set of nodes provided in an \texttt{OffsetVector} for zero-based indexing.
+
+\begin{lstlisting}[language=Julia]
+using OffsetArrays
+
+function lagrange_derivatives(xnodes::OffsetVector{T,Vector{T}}, j::Int, x::T) where T<:Real
+    return iterative_lagrange(xnodes, j, x, length(xnodes))
+end
+
+function iterative_lagrange(xnodes::OffsetVector{T,Vector{T}}, j::Int, x::T, q::Int) where T<:Real
+    L, dL, ddL = T(1.0), T(0.0), T(0.0)
+    keys = collect(axes(xnodes, 1))
+    for k in 1:q
+        idx = keys[k]
+        if idx == j
+            continue
+        end
+        denom = xnodes[j] - xnodes[idx]
+        factor = (x - xnodes[idx]) / denom
+        dfactor = T(1.0) / denom
+        ddfactor = T(0.0)
+        
+        new_L = L * factor
+        new_dL = dL * factor + L * dfactor
+        new_ddL = ddL * factor + 2 * dL * dfactor + L * ddfactor
+        L, dL, ddL = new_L, new_dL, new_ddL
+    end
+    return (L, dL, ddL)
+end
+
+function evalL(xnodes::OffsetVector{T,Vector{T}}, j::Int, x::T; order::Int=0) where T<:Real
+    L, dL, ddL = lagrange_derivatives(xnodes, j, x)
+    return order == 0 ? L : order == 1 ? dL : ddL
+end
+\end{lstlisting}
+
+The function \texttt{iterative\_lagrange} iteratively constructs the Lagrange basis polynomial \( L_j(x) \), along with its first and second derivatives.
+
+The iteration begins with an initial product of 1 (with derivatives set to 0) and processes each node sequentially, applying the product rule to update the polynomial value and its derivatives. By using an iterative approach, the implementation avoids the overhead of recursive function calls, improving performance for large node sets.
+
+The function \texttt{evalL} provides a convenient interface to evaluate \( L_j(x) \) or its derivatives at a specific point \( x \), based on the specified order.
+
+\clearpage
+
+\section{Interpolation Matrix \texorpdfstring{$\mathbf{D}_0$}{D0}}
+\label{sec:interp_matrix_D0}
+
+
+Considering \(\{x_j\}_{j=0}^{M-1}\) as the original (computational) nodes and \(\{x^{\text{interp}}_k\}_{k=0}^{N-1}\) as the new evaluation points
+(e.g., a finer grid for visualization). The interpolation matrix
+\(\mathbf{D}_0 \in \mathbb{R}^{N\times M}\) is defined so that the interpolated vector
+\(\mathbf{u}_{\text{interp}} \in \mathbb{R}^{N}\) (values of \(u\) at the \(x^{\text{interp}}_k\)) is obtained as
+\begin{equation}
+\mathbf{u}_{\text{interp}} \;=\; \mathbf{D}_0\,\mathbf{u},
+\qquad
+\mathbf{u} = \big(u(x_0),\dots,u(x_{M-1})\big)^\top.
+\end{equation}
+
+
+\subsection*{Mathematical derivation}
+For each \(x^{\text{interp}}_k\) choose a local stencil of \(q\) nodes
+\[
+S_k \subset \{0,\dots,M-1\}, \qquad |S_k| = q,
+\]
+e.g., the \(q\) contiguous nodes centered at the node nearest to \(x^{\text{interp}}_k\) (clamped at the boundaries).
+On that stencil, define the Lagrange polynomials
+\begin{equation}
+\ell^{(S_k)}_j(x)
+=
+\prod_{\substack{m \in S_k\\ m\neq j}}
+\frac{x - x_m}{x_j - x_m},
+\qquad j \in S_k,
+\qquad
+\ell^{(S_k)}_j(x) = 0 \ \text{if}\ j \notin S_k.
+\label{eq:lagrange_local}
+\end{equation}
+
+
+The \(k\)-th row of \(\mathbf{D}_0\) consists of the interpolation coefficients evaluated at \(x=x^{\text{interp}}_k\):
+\begin{equation}
+\boxed{\;
+\mathbf{D}_0[k,j] \;=\; \ell^{(S_k)}_j(x^{\text{interp}}_k), \qquad j=0,\dots,M-1
+\;}
+\label{eq:D0_definition}
+\end{equation}
+Then, for any nodal vector \(\mathbf{u}\),
+\begin{equation}
+(\mathbf{D}_0 \mathbf{u})_k
+\;=\;
+\sum_{j=0}^{M-1} \mathbf{D}_0[k,j]\,u(x_j)
+\;=\;
+\sum_{j\in S_k} \ell^{(S_k)}_j(x^{\text{interp}}_k)\,u(x_j),
+\label{eq:row_action}
+\end{equation}
+which is exactly the \((q-1)\)th degree Lagrange interpolant at \(x^{\text{interp}}_k\) built on stencil \(S_k\).
+
+
+\subsection*{Global interpolation case}
+In the global case we use the same stencil for every row:
+\[
+S_k \equiv \{0,\dots,M-1\} \qquad (\text{i.e., } q=M,\ \text{independent of }k).
+\]
+Let \(L_j(x)\) be the global Lagrange basis (note that we used \(\ell^{(S_k)}_j(x)\) when discussing local stencils and now referring to the global case with \(L_j(x)\)) on all \(M\) nodes,
+\begin{equation}
+L_j(x) \;=\; \prod_{\substack{m=0\\ m\neq j}}^{M-1} \frac{x-x_m}{x_j-x_m},
+\qquad j=0,\dots,M-1,
+\label{eq:global_lagrange}
+\end{equation}
+Then every row of \(\mathbf{D}_0\) is just the evaluation of these global basis polynomials at \(x^{\text{interp}}_k\):
+\begin{equation}
+\boxed{\;
+\mathbf{D}_0[k,j] \;=\; L_j(x^{\text{interp}}_k),
+\quad k=0,\dots,N-1,\ \ j=0,\dots,M-1
+\;}
+\label{eq:D0_global_def}
+\end{equation}
+
+
+This \(L_j(x)\) can be computed using the iterative Lagrange formulation we explained in \eqref{eq:Lq_iterative}.
+
+\clearpage
+
+\subsection*{Code implementation}
+
+
+In the math explanation above we use \(X=\{x_j\}_{j=0}^{M-1}\) (original/computational nodes) and
+\(X^{\text{interp}}=\{x^{\text{interp}}_k\}_{k=0}^{N-1}\) (evaluation points).  
+In the code, these appear as:
+\[
+x_j \leftrightarrow \texttt{xnodes[j]}, \qquad
+x^{\text{interp}}_k \leftrightarrow \texttt{xinterp[i+1]}.
+\]
+We choose a stencil \(S_k\) of size \(\texttt{stencil\_size}=q\) with
+\texttt{select\_stencil}, and we fill the row \(k\) of \(\mathbf{D}_0\) with the values
+\(\ell^{(S_k)}_j(x^{\text{interp}}_k)\) returned by \texttt{iterative\_lagrange} explained above:
+\[
+\mathbf{D}_0[k,j] \;=\; \ell^{(S_k)}_j(x^{\text{interp}}_k)\qquad\text{(Eq.~\eqref{eq:D0_definition})}
+\]
+
+
+
+\begin{lstlisting}[language=Julia]
+function select_stencil(i::Int, M::Int, q::Int)
+    half = div(q, 2)
+    imin = clamp(i - half, 0, M - q)
+    imax = imin + q - 1
+    return imin:imax
+end
+# xinterp ≠ xnodes
+function build_D0_matrix(xnodes::OffsetVector{T,Vector{T}},
+                         stencil_size::Int,
+                         xinterp::Vector{T}) where T<:Real
+    M = length(xnodes)  # Number of nodes.
+    N = length(xinterp)  # Number of evaluation points.
+    D0 = OffsetArray(zeros(T, N, M), 0:N-1, 0:M-1)  # Initialize matrix.
+
+    for i in 0:N-1
+        x = xinterp[i + 1]  # xinterp is 1-based.
+        idx_nearest = findmin(abs.(xnodes .- x))[2]
+        stencil_range = select_stencil(idx_nearest, M, stencil_size)
+        xstencil = OffsetArray(collect(xnodes[stencil_range]), stencil_range)
+
+        for j in stencil_range
+            q = length(xstencil)
+            lj, _, _ = iterative_lagrange(xstencil, j, x, q)
+            D0[i, j] = lj  # Set the basis weight.
+        end
+    end
+    return D0
+end
+# xinterp = xnodes
+function build_D0_matrix(xnodes::OffsetVector{T,Vector{T}},
+                         stencil_size::Int) where T<:Real
+    build_D0_matrix(xnodes, stencil_size, collect(xnodes))
+end
+\end{lstlisting}
+
+
+Each loop over \(k\) builds the \(k\)-th row by evaluating the local Lagrange basis on the
+stencil \(S_k\) at \(x^{\text{interp}}_k\), exactly implementing \(\mathbf{D}_0[k,j]=\ell^{(S_k)}_j(x^{\text{interp}}_k)\).
+Thus \(\mathbf{D}_0\mathbf{u}\) produces the \((q-1)\)th degree interpolant at all \(x^{\text{interp}}_k\).
+
+
+With \(\texttt{stencil\_size}=M\), it becomes the global \((M-1)\)th degree interpolant.
+
+\clearpage
+
+\section{First Derivative Matrix \texorpdfstring{$\mathbf{D}_1$}{D1}}
+\label{sec:first_derivative_matrix_D1}
+
+Let \(X=\{x_j\}_{j=0}^{M-1}\) be the computational nodes. The first derivative
+matrix \(\mathbf{D}_1 \in \mathbb{R}^{M\times M}\) maps nodal samples
+\(\mathbf{u}=(u(x_0),\dots,u(x_{M-1}))^\top\) to an approximation of the spatial
+derivative \(u_x\) evaluated at the nodes:
+\begin{equation}
+(\mathbf{D}_1\mathbf{u})_i \;\approx\; \left.\frac{\partial u}{\partial x}\right|_{x=x_i},
+\qquad i=0,\dots,M-1.
+\end{equation}
+
+\subsection*{Mathematical derivation}
+For each target node \(x_i\) choose a local stencil of \(q\) nodes
+\[
+S_i \subset \{0,\dots,M-1\}, \qquad |S_i|=q,
+\]
+e.g., the \(q\) contiguous indices centered at \(i\) (clamped at the boundaries).
+
+On that stencil, define the local Lagrange basis \(\{\ell^{(S_i)}_j(x)\}_{j\in S_i}\) by
+\begin{equation}
+\ell^{(S_i)}_j(x)
+=
+\prod_{\substack{m \in S_i\\ m\neq j}}
+\frac{x - x_m}{x_j - x_m},
+\qquad j\in S_i,
+\qquad
+\ell^{(S_i)}_j(x)=0 \ \text{if } j\notin S_i,
+\end{equation}
+
+The derivative at \(x_i\) is approximated by differentiating the local interpolant on \(S_i\)
+and evaluating at \(x_i\):
+
+
+\begin{equation}
+\left.\frac{\partial u}{\partial x}\right|_{x=x_i}
+\;\approx\;
+\sum_{j\in S_i} \ell^{(S_i)\prime}_j(x_i)\,u(x_j).
+\end{equation}
+Therefore, the entries of \(\mathbf{D}_1\) are
+\begin{equation}
+\boxed{\;
+\mathbf{D}_1[i,j] \;=\; \ell^{(S_i)\prime}_j(x_i),
+\qquad i=0,\dots,M-1,\ \ j=0,\dots,M-1
+\;}
+\label{eq:D1_definition}
+\end{equation}
+with \(\mathbf{D}_1[i,j]=0\) whenever \(j\notin S_i\). With this definition,
+\((\mathbf{D}_1\mathbf{u})_i\) is exactly the derivative of the \((q-1)\)th degree Lagrange
+interpolant on \(S_i\) evaluated at \(x_i\).
+
+\subsection*{Global interpolation case}
+
+If \(S_i=\{0,\dots,M-1\}\) for every \(i\) (i.e., \(q=M\)), we obtain the global
+first-derivative matrix:
+
+\begin{equation}
+\boxed{\;
+\mathbf{D}_1[i,j] \;=\; L_j'(x_i)
+\;}
+\label{eq:D1_global_def}
+\end{equation}
+
+where \(L_j(x)\) are the global Lagrange polynomials on all \(M\) nodes. This polynomials derivatives can be obtained using the same iterative Lagrange formulation we explained in \eqref{eq:Lq_derivative}.
+
+In this case of global interpolation, the \(\mathbf{D}_1\) matrix is dense.
+
+\clearpage
+
+\subsection*{Code implementation}
+In the math above we use \(X=\{x_j\}_{j=0}^{M-1}\) as the node set and we evaluate the
+first derivative at the nodes.
+In the code, these appear as:
+\[
+x_j \leftrightarrow \texttt{xnodes[j]}, \qquad
+x_i \ (\text{target node}) \leftrightarrow \texttt{xnodes[i]}.
+\]
+For each target node \(x_i\) we choose a stencil \(S_i\) of size \(\texttt{stencil\_size}=q\) with
+\texttt{select\_stencil(i, M, q)}, build the local node array, and fill row \(i\) of
+\(\mathbf{D}_1\) with the first derivatives of the local Lagrange basis at \(x_i\),
+returned by \texttt{iterative\_lagrange}.
+\[
+\mathbf{D}_1[i,j] \;=\; \ell^{(S_i)\prime}_j(x_i)\qquad\text{(Eq.~\eqref{eq:D1_definition})}
+\]
+
+\begin{lstlisting}[language=Julia]
+function select_stencil(i::Int, M::Int, q::Int)
+    half = div(q, 2)
+    imin = clamp(i - half, 0, M - q)
+    imax = imin + q - 1
+    return imin:imax
+end
+
+function build_D1_matrix(xnodes::OffsetVector{<:Real}, stencil_size::Int, ::Type{T}=Float64) where T<:Real
+    M = length(xnodes)  # Number of nodes.
+    D1 = OffsetArray(zeros(T, M, M), 0:M-1, 0:M-1)  # Initialize matrix
+
+    for i in 0:M-1
+        stencil_range = select_stencil(i, M, stencil_size)
+        xstencil = OffsetArray(convert.(T, collect(xnodes[stencil_range])), stencil_range)
+
+        for j in stencil_range
+            q = length(xstencil) 
+            _, lp, _ = iterative_lagrange(xstencil, j, T(xnodes[i]), q)
+            D1[i, j] = lp  # Set the differentiation weight.
+        end
+    end
+
+    return D1
+end
+\end{lstlisting}
+
+Setting \(\texttt{stencil\_size}=M\) yields the global case \(S_i=\{0,\dots,M-1\}\) for all \(i\).
+
+Multiplying \(\mathbf{D}_1\) by the nodal vector \(\mathbf{u}\) returns the
+first derivative approximations at all nodes. The same selection logic for
+\(\texttt{stencil\_size}\) controls whether the construction is local (sparse/banded) or global (dense).
+
+\clearpage
+
+
+\section{Second Derivative Matrix \texorpdfstring{$\mathbf{D}_2$}{D2}}
+\label{sec:second_derivative_matrix_D2}
+
+Let \(X=\{x_j\}_{j=0}^{M-1}\) be the computational nodes. The second derivative
+matrix \(\mathbf{D}_2 \in \mathbb{R}^{M\times M}\) maps nodal samples
+\(\mathbf{u}=(u(x_0),\dots,u(x_{M-1}))^\top\) to an approximation of the spatial
+second derivative \(u_{xx}\) evaluated at the nodes:
+\begin{equation}
+(\mathbf{D}_2\mathbf{u})_i \;\approx\; \left.\frac{\partial^2 u}{\partial x^2}\right|_{x=x_i},
+\qquad i=0,\dots,M-1.
+\end{equation}
+
+\subsection*{Mathematical derivation}
+For each target node \(x_i\) choose a local stencil of \(q\) nodes
+\[
+S_i \subset \{0,\dots,M-1\}, \qquad |S_i|=q,
+\]
+e.g., the \(q\) contiguous indices centered at \(i\) (clamped at the boundaries).
+
+
+On that stencil, define the local Lagrange basis \(\{\ell^{(S_i)}_j(x)\}_{j\in S_i}\) by
+\begin{equation}
+\ell^{(S_i)}_j(x)
+=
+\prod_{\substack{m \in S_i\\ m\neq j}}
+\frac{x - x_m}{x_j - x_m},
+\qquad j\in S_i,
+\qquad
+\ell^{(S_i)}_j(x)=0 \ \text{if } j\notin S_i.
+\end{equation}
+Differentiate the local interpolant twice and evaluate at \(x_i\):
+\begin{equation}
+\left.\frac{\partial^2 u}{\partial x^2}\right|_{x=x_i}
+\;\approx\;
+\sum_{j\in S_i} \ell^{(S_i)\prime\prime}_j(x_i)\,u(x_j).
+\end{equation}
+Therefore, the entries of \(\mathbf{D}_2\) are
+\begin{equation}
+\boxed{\;
+\mathbf{D}_2[i,j] \;=\; \ell^{(S_i)\prime\prime}_j(x_i),
+\qquad i=0,\dots,M-1,\ \ j=0,\dots,M-1
+\;}
+\label{eq:D2_definition}
+\end{equation}
+with \(\mathbf{D}_2[i,j]=0\) whenever \(j\notin S_i\). With this definition,
+\((\mathbf{D}_2\mathbf{u})_i\) is exactly the second derivative of the degree-\((q-1)\)
+Lagrange interpolant on \(S_i\) evaluated at \(x_i\).
+
+\subsection*{Global interpolation case}
+
+If \(S_i=\{0,\dots,M-1\}\) for every \(i\) (i.e., \(q=M\)), we obtain the global
+second-derivative matrix:
+\begin{equation}
+\boxed{\;
+\mathbf{D}_2[i,j] \;=\; L_j''(x_i)
+\;}
+\label{eq:D2_global_def}
+\end{equation}
+where \(L_j(x)\) are the global Lagrange polynomials on all \(M\) nodes. The values
+\(L_j''(x_i)\) can be computed with the iterative Lagrange formulation in
+\eqref{eq:Lq_second_derivative}.
+
+In this case of global interpolation, \(\mathbf{D}_2\) is a dense matrix, as it was for \(\mathbf{D}_1\).
+
+\clearpage
+
+\subsection*{Code implementation}
+\noindent\textbf{Implementation bridge.}
+We evaluate at the nodes themselves (target \(x_i\) and source \(x_j\) are entries of
+\texttt{xnodes}). For each row \(i\), we choose \(S_i=\texttt{select\_stencil}(i,M,q)\),
+form the local node array, and fill \(\mathbf{D}_2[i,j]\) with the \emph{second derivatives}
+returned by \texttt{iterative\_lagrange} at \(x_i\):
+\[
+\mathbf{D}_2[i,j] \;=\; \ell^{(S_i)\prime\prime}_j(x_i)\qquad\text{(Eq.~\eqref{eq:D2_definition})}
+\]
+
+\begin{lstlisting}[language=Julia]
+# File: code/interpolants/D2_matrix.jl
+
+using OffsetArrays
+
+include("iterative_lagrange.jl")  # Your module with lagrange_derivatives
+
+function build_D2_matrix(xnodes::OffsetVector{<:Real}, stencil_size::Int, ::Type{T}=Float64) where T<:Real
+    M = length(xnodes)  # Number of nodes.
+    D2 = OffsetArray(zeros(T, M, M), 0:M-1, 0:M-1)  # Initialize matrix with type T.
+
+    for i in 0:M-1
+        # Select stencil centered at i.
+        stencil_range = select_stencil(i, M, stencil_size)
+        # Create a sub-OffsetArray for the stencil nodes, converting to T.
+        xstencil = OffsetArray(convert.(T, collect(xnodes[stencil_range])), stencil_range)
+
+        for j in stencil_range
+            q = length(xstencil)  # Actual stencil size.
+            _, _, lpp = iterative_lagrange(xstencil, j, T(xnodes[i]), q)
+            D2[i, j] = lpp  # Set the differentiation weight.
+        end
+    end
+
+    return D2
+end
+\end{lstlisting}
+
+Setting \(\texttt{stencil\_size}=M\) yields the global case \(S_i=\{0,\dots,M-1\}\) for all \(i\).
+
+Multiplying \(\mathbf{D}_2\) by the nodal vector \(\mathbf{u}\) returns the
+second derivative approximations at all nodes. The same selection logic for
+the local stencils applies here, ensuring that each node's second derivative is computed
+using only its neighbors. The choice of \(\texttt{stencil\_size}\) controls again whether the construction is local or global.
