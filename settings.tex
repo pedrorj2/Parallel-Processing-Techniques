@@ -1,129 +1,128 @@
 % **************************************************
-% Settings
+% Settings (packages y configuración)
 % **************************************************
-% --------------------------
-% Packages
-% --------------------------
+
+% Idiomas y codificación
 \usepackage[spanish,english,es-tabla]{babel}
-\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}     % Use a modern font (that is not pixelated)
-\usepackage[protrusion=true, expansion=true]{microtype}  % Use microtype to improve readability
-\usepackage{amsmath,amssymb} 
-\usepackage{tabularx}    % tables spanning the full text width
-\usepackage{multicol}    % multi-columns in tables
-\usepackage{multirow}    % multi-rows in tables
-\usepackage{longtable}   % tables spanning more than one page
-\usepackage{booktabs}    % nicer horizontal rules in tables
-\usepackage{colortbl}    % color in tables
-\usepackage{array}       % custom column widths in tables
-\usepackage{ltablex}
-\usepackage{setspace}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+
+% Tipografía fina y microtipografía
+\usepackage[protrusion=true,expansion=true]{microtype}
+
+% Matemáticas y tablas
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{colortbl}
+\usepackage{siunitx}
+\DeclareSIUnit\bit{bit}
+
+% Gráficos y TikZ/PGF
+\usepackage{graphicx}
 \usepackage{tikz}
-\usetikzlibrary{matrix, arrows.meta, positioning}                % drawing custom shapes
-\usepackage{graphicx,graphics}   % packages to manage images
-\usepackage{subfigure}           % display two figures next to each other
-\usepackage[export]{adjustbox}
-\usepackage{ragged2e} 
-\usepackage{comment} 
-\usepackage{blindtext}
-\usepackage[acronym,nonumberlist,nomain]{glossaries}  % package for list of acronyms
-\usepackage{hyperref}
-\usepackage[a4paper]{geometry}
-\usepackage{parskip}     % paragraph spacing (suppress indentation)
-\usepackage{fancyhdr}    % customize header and footer
-\usepackage{enumitem}
-\usepackage{xcolor}
-\usepackage{emptypage}   % no headers in empty pages
-\usepackage[small,hang,bf]{caption}    % caption options
+\usetikzlibrary{matrix,arrows.meta,positioning}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.17}
+
+% Subfiguras (solo subcaption; NO usar subfigure)
 \usepackage{subcaption}
-\usepackage{csquotes}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+
+% Varias utilidades
+\usepackage{setspace}
+\usepackage{ragged2e}
+\usepackage{comment}
+\usepackage{blindtext}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{emptypage}
 \usepackage{tcolorbox}
 \usepackage{verbatim}
 \usepackage{float}
 \usepackage{afterpage}
 \usepackage{soul}
-\usepackage{titlesec} % to modify titles and sections
-\usepackage{siunitx}
+\usepackage{titlesec}
 \usepackage{mdframed}
-\DeclareSIUnit\bit{bit}
+\usepackage[export]{adjustbox}
+\usepackage{csquotes} % recomendado por biblatex
 
+% Hiperenlaces (cargar ANTES que biblatex)
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue,
+  citecolor=blue
+}
 
-% Ajuste de la sección con sangría
+% Geometría
+\usepackage[a4paper]{geometry}
+\newgeometry{top=2.5cm, bottom=2.5cm, right=2.5cm, left=2.5cm}
+
+% Espaciado de párrafos
+\usepackage{parskip}
+\setlength{\parskip}{10pt}
+
+% Cabeceras y pies
+\usepackage{fancyhdr}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.2pt}
+\fancyhead[RO]{\nouppercase \leftmark}
+\fancyhead[LE]{\thesisAuthor}
+\fancyfoot[C]{\thepage}
+\setlength{\headheight}{14.5pt}
+\addtolength{\topmargin}{-2.5pt}
+
+% Títulos compactos
 \titlespacing*{\section}{0pt}{*0.5}{*0.5}
 \titlespacing*{\subsection}{0pt}{*0.3}{*0.3}
 
-\usepackage[utf8]{inputenc}  
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.17}
-
-%%% Added to improve the elegance of reference style
-\usepackage[square,numbers]{natbib}
-
-
-% --------------------------
-% Customize document
-% --------------------------
-% Define the geometry of the document
-\newgeometry {top=2.5cm, bottom=2.5cm, right=2.5cm, left=2.5cm}
-
-\setlength{\parskip}{10pt}   % Change the default value
-
-% hiperlinks
-\hypersetup{
-    colorlinks=true,
-    linkcolor=black,       % Enlaces internos en azul
-    urlcolor=blue,       
-    citecolor=blue,
-}
-
-% Header and footer
-\fancyhf{}   % Clear the default header and footer
-\renewcommand{\headrulewidth}{0.2pt}
- 
-\fancyhead[RO]{\nouppercase \leftmark}  % Define the header for odd and even pages
-\fancyhead[LE]{\thesisAuthor}           % Define the header for odd and even pages
-\fancyfoot[C]{\thepage}
-
-\addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
-
-% Increase indentation in lists
+% Listas personalizadas
 \newlist{mydescription}{description}{1}
-\setlist[mydescription,1]{labelindent=2em, leftmargin=2em}
+\setlist[mydescription,1]{labelindent=2em,leftmargin=2em}
 
-% Listings for code blocks in Julia
+% Listings para Julia
 \usepackage{listings}
 \usepackage{listingsutf8}
-
 \lstdefinelanguage{Julia}{
   morekeywords={
-    abstract, break, case, catch, const, continue, do, else, elseif, end, export, false, for, function, immutable, import, in, macro, module, true, try, using, while, struct, mutable, return
+    abstract, break, case, catch, const, continue, do, else, elseif, end, export,
+    false, for, function, immutable, import, in, macro, module, true, try, using,
+    while, struct, mutable, return
   },
   sensitive=true,
   morecomment=[l]\#,
-  morestring=[b]",
-  morestring=[b]',
+  morestring=[b]", % cadenas
+  morestring=[b]'  % caracteres
 }
-
 \lstset{
-    language=Julia,
-    basicstyle=\ttfamily\footnotesize,
-    keywordstyle=\color{blue}\bfseries,
-    identifierstyle=\color{black},
-    commentstyle=\color{gray},
-    stringstyle=\color[rgb]{0,0.75,0},
-    numbers=left,
-    numberstyle=\tiny,
-    stepnumber=1,
-    numbersep=5pt,
-    showstringspaces=false,
-    breaklines=true,
-    frame=single,
-    columns=fullflexible,
-    literate={∇}{{$\nabla$}}1 {²}{{$^2$}}1 {α}{{$\alpha$}}1 {Δ}{{$\Delta$}}1
-           {≤}{{$\leq$}}1 {≥}{{$\geq$}}1 {⁻}{{$^{-}$}}1
+  language=Julia,
+  inputencoding=utf8,
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  commentstyle=\color{gray},
+  stringstyle=\color[rgb]{0,0.75,0},
+  numbers=left,
+  numberstyle=\tiny,
+  stepnumber=1,
+  numbersep=5pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  literate={∇}{{$\nabla$}}1 {²}{{$^2$}}1 {α}{{$\alpha$}}1 {Δ}{{$\Delta$}}1
+           {≤}{{$\leq$}}1 {≥}{{$\geq$}}1 {⁻}{{$^{-}$}}1,
 }
 
+% Soporte de acentos y símbolos en listings
 \lstset{literate=
   {á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
   {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
@@ -138,7 +137,28 @@
   {œ}{{\oe}}1 {Œ}{{\OE}}1 {æ}{{\ae}}1 {Æ}{{\AE}}1 {ß}{{\ss}}1
   {ű}{{\H{u}}}1 {Ű}{{\H{U}}}1 {ő}{{\H{o}}}1 {Ő}{{\H{O}}}1
   {ç}{{\c c}}1 {Ç}{{\c C}}1 {ø}{{\o}}1 {Ø}{{\O}}1 {å}{{\r a}}1 {Å}{{\r A}}1
-  {€}{{\euro}}1 {£}{{\pounds}}1 {«}{{\guillemotleft}}1
-  {»}{{\guillemotright}}1 {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1 {¡}{{!`}}1
-  {μ}{{$\mu$}}1 {≠}{$\neq$ }1
+  {€}{{\euro}}1 {£}{{\pounds}}1 {«}{{\guillemotleft}}1 {»}{{\guillemotright}}1
+  {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {¿}{{?`}}1 {¡}{{!`}}1
+  {μ}{{$\mu$}}1 {≠}{{$\neq$}}1
 }
+
+% --------- BIBLIOGRAFÍA (SOLO biblatex; NO natbib) ----------
+% ¡No cargues natbib!
+\usepackage[
+  backend=biber,
+  style=ieee,        % estilo estándar disponible
+  sorting=nyt,
+  doi=true,
+  url=true,          % true para fuentes online (recomendado)
+  isbn=false,
+  giveninits=true,
+  maxcitenames=2,
+  maxbibnames=99,
+  natbib=true        % habilita comandos tipo natbib (\citet, \citep) si los usas
+]{biblatex}
+
+% Tu(s) fichero(s) .bib
+\addbibresource{references.bib}
+
+% Traducciones mínimas
+\addto\captionsenglish{\renewcommand{\contentsname}{Table of Contents}}
