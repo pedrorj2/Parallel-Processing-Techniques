@@ -83,14 +83,14 @@ function main(T::Type=Float32)
     Lx, Ly = T(1.0), T(1.0)
     c = T(1.0)
     dt = T(1e-4) * min(Lx/Nx, Ly/Ny)
-    T_time = T(1.0)
+    T_time = T(2.0)
     Nt = Int(floor(T_time/dt))
     A = T(1.0)
     σ = T(0.075)
     x_c, y_c = Lx/T(2), Ly/T(2)
 
     stencil = 26
-    nodetype = :chebyshev # :equispaced, :chebyshev, :chebyshev_lobatto
+    nodetype = :chebyshev_lobatto # :equispaced, :chebyshev, :chebyshev_lobatto
 
     # --- Nodes ---
     xnodes = nodetype == :chebyshev ? convert.(T, chebyshev_nodes(Nx)) :
