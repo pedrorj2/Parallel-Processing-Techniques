@@ -9,25 +9,27 @@ include("../1_annexes/system_info.jl")
 # --------------------------------------------------------
 
 # Set to true to save the plot as a file, false to display it in Julia
-save_plot = false
+save_plot = true
 
 # --------------------------------------------------------
 # Interactive prompts for user input
 # --------------------------------------------------------
 
-println("Choose floating-point type:")
-println("1. Float32")
-println("2. Float64")
-choice = parse(Int, readline())
-if choice == 1
-    T = Float32
-elseif choice == 2
-    T = Float64
-else
-    error("Invalid choice. Please select 1 (Float32) or 2 (Float64).")
-end
+# println("Choose floating-point type:")
+# println("1. Float32")
+# println("2. Float64")
+# choice = parse(Int, readline())
+# if choice == 1
+#     T = Float32
+# elseif choice == 2
+#     T = Float64
+# else
+#     error("Invalid choice. Please select 1 (Float32) or 2 (Float64).")
+# end
+T = Float32  # Change to Float64 if needed
 
-Ns = 256:256:8192
+# Ns = 50:25:500
+Ns = 200:200:4000
 
 println("Number of N sizes: $(length(Ns))")
 println(" ")
@@ -129,6 +131,7 @@ gflops_theoretical_gpu = Float64[]
 # Speedups
 speedup_MxM = Float64[]
 speedup_MxV = Float64[]
+speedup_theoretical_MxM = Float64[]
 
 # --------------------------------------------------------
 # GPU preparation
@@ -142,7 +145,7 @@ CUDA.synchronize()
 
 for N in Ns
     GC.gc()
-    sleep(0.01)
+    sleep(5.0)
 
     A     = rand(T, N, N)
     B_mat = rand(T, N, N)
@@ -216,6 +219,9 @@ for N in Ns
     push!(speedup_MxM, gflops_MxM_gpu[end] / gflops_MxM_multi[end])
     push!(speedup_MxV, gflops_MxV_gpu[end] / gflops_MxV_multi[end])
 
+    # Theoretical speedup (approximate)
+    push!(speedup_theoretical_MxM, gflops_theoretical_gpu[end] / gflops_theoretical_multi[end])
+
     # Short console log
     println("N = $N | MxM_s:$(round(gflops_MxM_single[end],digits=1))  MxM_m:$(round(gflops_MxM_multi[end],digits=1))  ",
             "MxV_s:$(round(gflops_MxV_single[end],digits=1))  MxV_m:$(round(gflops_MxV_multi[end],digits=1)) | ",
@@ -230,38 +236,42 @@ Ns_vec = collect(Ns)
 # --------------------------------------------------------
 default(
     markerstrokewidth=0,
-    legendfontsize=12,
-    margins=5mm,
-    xtickfont=font(12, "sans-serif", :black, rotation=0),
-    ytickfont=font(12, "sans-serif", :black, rotation=0),
-    xguidefont=font(12, "sans-serif", :black, rotation=0),
-    yguidefont=font(12, "sans-serif", :black, rotation=0)
+    legendfontsize=14,
+    margins=10mm,
+    xtickfont=font(14, "sans-serif", :black, rotation=0),
+    ytickfont=font(14, "sans-serif", :black, rotation=0),
+    xguidefont=font(14, "sans-serif", :black, rotation=0),
+    yguidefont=font(14, "sans-serif", :black, rotation=0)
 )
 
 mkpath("figures/5_cpu_vs_gpu")
 
 # Speedup plot
-yg_max_speedup = maximum(vcat(speedup_MxM, speedup_MxV)) * 1.02
+yg_max_speedup = maximum(vcat(speedup_MxM, speedup_MxV, speedup_theoretical_MxM)) * 1.02
+#yg_max_speedup = maximum(vcat(speedup_MxM, speedup_MxV)) * 1.02
 
 p_speedup = plot(
-    Ns_vec, speedup_MxM, label="MxM Speedup (GPU / CPU Multi)", lw=1, color=:blue, marker=:circle, markersize=4,
-    xlabel="Matrix size N", ylabel="Speedup", legend=:topleft,
-    ylims=(0, yg_max_speedup), grid=true, size=(1200, 600),
-    legendfontsize=12,
-    xtickfont=font(12, "sans-serif", :black, rotation=0),
-    ytickfont=font(12, "sans-serif", :black, rotation=0),
-    xguidefont=font(12, "sans-serif", :black, rotation=0),
-    yguidefont=font(12, "sans-serif", :black, rotation=0)
+    Ns_vec, speedup_MxM, label="MxM (GPU GFLOPS / CPU GFLOPS)", lw=3, linestyle=:dash, color=:blue, marker=:circle, markersize=4,
+    xlabel="Matrix size N", ylabel="Ratio GPU / CPU", legend=:topleft,
+    ylims=(0, yg_max_speedup), grid=true, size=(1600, 800),
+    legendfontsize=14,
+    xtickfont=font(14, "sans-serif", :black, rotation=0),
+    ytickfont=font(14, "sans-serif", :black, rotation=0),
+    xguidefont=font(14, "sans-serif", :black, rotation=0),
+    yguidefont=font(14, "sans-serif", :black, rotation=0)
 )
-plot!(p_speedup, Ns_vec, speedup_MxV, label="MxV Speedup (GPU / CPU Multi)", lw=1, marker=:circle, markersize=4, color=:green)
+plot!(p_speedup, Ns_vec, speedup_MxV, label="MxV (GPU GFLOPS / CPU GFLOPS)", lw=3, linestyle=:dash, marker=:circle, markersize=4, color=:green)
 
-plot!(p_speedup, Ns_vec, fill(1, length(Ns_vec)), lw=2, ls=:dash, color=:black, label="1x Baseline")
+plot!(p_speedup, Ns_vec, fill(1, length(Ns_vec)), lw=3, ls=:solid, color=:red, label="1x Baseline")
+
+plot!(p_speedup, Ns_vec, fill(speedup_theoretical_MxM[end], length(Ns_vec)), lw=3, ls=:solid, color=:black, label="Theoretical (GPU GFLOPS / CPU GFLOPS): $(round(speedup_theoretical_MxM[end],digits=1))x")
+
 
 # Display or save the plot based on save_plot
 if save_plot
-    savefig(p_speedup, "figures/5_cpu_vs_gpu/$(T)_GFLOPS_speedup.png")
+    savefig(p_speedup, "figures/5_cpu_vs_gpu/5presentacion$(T)_GFLOPS_speedup.png")
     println("Saved figure:")
-    println("  - figures/5_cpu_vs_gpu/$(T)_GFLOPS_speedup.png")
+    println("  - figures/5_cpu_vs_gpu/5presentacion$(T)_GFLOPS_speedup.png")
 else
     display(p_speedup)
     println("Speedup plot displayed (not saved).")

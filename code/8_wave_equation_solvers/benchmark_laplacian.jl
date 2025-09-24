@@ -8,6 +8,7 @@ using Base.Threads
 using BenchmarkTools
 using Measures
 using MKL
+using Profile; using ProfileSVG
 
 BLAS.set_num_threads(12)
 
@@ -93,7 +94,7 @@ function benchmark_laplacians()
     N_cores = num_physical_cores()
     N_threads = 12
 
-    for N in Ns
+    @profile for N in Ns
         @printf("Benchmarking for N=%d\n", N)
         stencil = N + 1  # Global interpolation: stencil = N + 1
 
@@ -163,12 +164,12 @@ function benchmark_laplacians()
 
     default(
         markerstrokewidth=0,
-        legendfontsize=12,
+        legendfontsize=14,
         margins=5mm,
-        xtickfont=font(12, "sans-serif", :black, rotation=0),
-        ytickfont=font(12, "sans-serif", :black, rotation=0),
-        xguidefont=font(12, "sans-serif", :black, rotation=0),
-        yguidefont=font(12, "sans-serif", :black, rotation=0)
+        xtickfont=font(14, "sans-serif", :black, rotation=0),
+        ytickfont=font(14, "sans-serif", :black, rotation=0),
+        xguidefont=font(14, "sans-serif", :black, rotation=0),
+        yguidefont=font(14, "sans-serif", :black, rotation=0)
     )
 
     mkpath("figures/8_wave_equation_solvers")

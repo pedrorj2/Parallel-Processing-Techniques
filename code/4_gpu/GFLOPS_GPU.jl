@@ -11,7 +11,7 @@ include("../1_annexes/system_info.jl")   # For gpu_info(true)
 # --------------------------------------------------------
 
 # Set to true to save the plots as files, false to display in Julia
-save_plot = false
+save_plot = true
 
 # --------------------------------------------------------
 # Interactive prompts for user input
@@ -30,17 +30,17 @@ else
 end
 
 println("Choose matrix size range:")
-println("1. 256:256:8192")
-println("2. 32:32:512 (for low N)")
+println("1. 200:100:4000")
+println("2. 20:20:500 (for low N)")
 choice_range = parse(Int, readline())
 if choice_range == 1
-    Ns = 256:256:8192
+    Ns = 200:100:4000
     file_suffix = ""
 elseif choice_range == 2
-    Ns = 32:32:512
+    Ns = 20:20:500
     file_suffix = "_lowN"
 else
-    error("Invalid choice. Please select 1 (256:256:8192) or 2 (32:32:512).")
+    error("Invalid choice. Please select 1 (200:200:4000) or 2 (20:20:500).")
 end
 
 println("Number of N sizes: $(length(Ns))")
@@ -207,12 +207,12 @@ end
 # --------------------------------------------------------
 default(
     markerstrokewidth=0,
-    legendfontsize=12,
-    margins=5mm,
-    xtickfont=font(12, "sans-serif", :black, rotation=0),
-    ytickfont=font(12, "sans-serif", :black, rotation=0),
-    xguidefont=font(12, "sans-serif", :black, rotation=0),
-    yguidefont=font(12, "sans-serif", :black, rotation=0)
+    legendfontsize=14,
+    margins=10mm,
+    xtickfont=font(14, "sans-serif", :black, rotation=0),
+    ytickfont=font(14, "sans-serif", :black, rotation=0),
+    xguidefont=font(14, "sans-serif", :black, rotation=0),
+    yguidefont=font(14, "sans-serif", :black, rotation=0)
 )
 
 mkpath("figures/4_gpu/gflops")
@@ -220,22 +220,22 @@ mkpath("figures/4_gpu/gflops")
 # --------------------------------------------------------
 # Plot (A) or (C): T MxM vs MxV
 # --------------------------------------------------------
-yg_max_T = maximum(vcat(gflops_MxM_T, gflops_MxV_T, gflops_theoretical_T)) * 1.02
+yg_max_T = maximum(vcat(gflops_MxM_T, gflops_MxV_T)) * 1.02
 p_T = plot(
-    Ns_vec, gflops_MxM_T, label="MxM ($(string(T)))", lw=1, color=:blue, linestyle=:solid, marker=:circle, markersize=4,
+    Ns_vec, gflops_MxM_T, label="MxM ($(string(T)))", lw=3, color=:blue, linestyle=:dash, marker=:circle, markersize=4,
     xlabel="Matrix size N", ylabel="GFLOPS", legend=:topleft,
-    ylims=(0, yg_max_T), grid=true, size=(1200, 600)
+    ylims=(0, yg_max_T), grid=true, size=(1600, 800)
 )
-plot!(p_T, Ns_vec, gflops_MxV_T, label="MxV ($(string(T)))", lw=1, color=:green, linestyle=:solid, marker=:cross, markersize=4)
+plot!(p_T, Ns_vec, gflops_MxV_T, label="MxV ($(string(T)))", lw=3, color=:green, linestyle=:dash, marker=:circle, markersize=4)
 plot!(p_T, Ns_vec, gflops_theoretical_T,
       label="Theoretical peak ($(string(T))): $(round(gflops_theoretical_T[end],digits=1))",
-      lw=1, linestyle=:dash, color=:black)
+      lw=3, linestyle=:solid, color=:black)
 
 # Filename and title label by T
 if T === Float32
-    outfile_T = "figures/4_gpu/gflops/FP32_GFLOPS_$(gpu_tag)_MxM_vs_MxV$(file_suffix).png"
+    outfile_T = "figures/4_gpu/gflops/presentacionFP32_GFLOPS_$(gpu_tag)_MxM_vs_MxV$(file_suffix).png"
 else
-    outfile_T = "figures/4_gpu/gflops/FP64_GFLOPS_$(gpu_tag)_MxM_vs_MxV$(file_suffix).png"
+    outfile_T = "figures/4_gpu/gflops/presentacionFP64_GFLOPS_$(gpu_tag)_MxM_vs_MxV$(file_suffix).png"
 end
 
 # --------------------------------------------------------
@@ -243,15 +243,15 @@ end
 # --------------------------------------------------------
 yg_max_B = maximum(vcat(gflops_MxM_FP32, gflops_MxM_FP64, [MAX_GFLOPS_FP32, MAX_GFLOPS_FP64])) * 1.02
 p_B = plot(
-    Ns_vec, gflops_MxM_FP32, label="MxM (FP32)", lw=1, color=:blue, linestyle=:solid, marker=:circle, markersize=4,
+    Ns_vec, gflops_MxM_FP32, label="MxM (FP32)", lw=3, color=:blue, linestyle=:solid, marker=:circle, markersize=4,
     xlabel="Matrix size N", ylabel="GFLOPS", legend=:topleft,
-    ylims=(0, yg_max_B), grid=true, size=(1200, 600)
+    ylims=(0, yg_max_B), grid=true, size=(1600, 800)
 )
-plot!(p_B, Ns_vec, gflops_MxM_FP64, label="MxM (FP64)", lw=1, color=:red, linestyle=:solid, marker=:utriangle, markersize=4)
-plot!(p_B, Ns_vec, fill(MAX_GFLOPS_FP32, length(Ns_vec)), label="Theoretical FP32: $(MAX_GFLOPS_FP32)", lw=1, linestyle=:dash, color=:black)
-plot!(p_B, Ns_vec, fill(MAX_GFLOPS_FP64, length(Ns_vec)), label="Theoretical FP64: $(MAX_GFLOPS_FP64)", lw=1, linestyle=:dashdot, color=:gray)
+plot!(p_B, Ns_vec, gflops_MxM_FP64, label="MxM (FP64)", lw=3, color=:red, linestyle=:solid, marker=:utriangle, markersize=4)
+plot!(p_B, Ns_vec, fill(MAX_GFLOPS_FP32, length(Ns_vec)), label="Theoretical FP32: $(MAX_GFLOPS_FP32)", lw=3, linestyle=:dash, color=:black)
+plot!(p_B, Ns_vec, fill(MAX_GFLOPS_FP64, length(Ns_vec)), label="Theoretical FP64: $(MAX_GFLOPS_FP64)", lw=3, linestyle=:dashdot, color=:gray)
 
-outfile_B = "figures/4_gpu/gflops/FP32_vs_FP64_GFLOPS_$(gpu_tag)_MxM$(file_suffix).png"
+outfile_B = "figures/4_gpu/gflops/presentacionFP32_vs_FP64_GFLOPS_$(gpu_tag)_MxM$(file_suffix).png"
 
 # --------------------------------------------------------
 # Display or save
@@ -264,6 +264,6 @@ if save_plot
     # println("  - ", outfile_B)
 else
     display(p_T)
-    display(p_B)
+    # display(p_B)
     println("Plots displayed (not saved).")
 end

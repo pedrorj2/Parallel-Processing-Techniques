@@ -1,0 +1,13 @@
+=== SIMULATION PARAMETERS ===
+Method: Mxm (Matrix-Matrix)
+Temporal Scheme: RK4
+Precision: Float64
+Grid Size: 50 x 50
+Time Step: 0.0002
+Total Steps: 5000
+Total Time: 1.0
+Execution Time: 1.45 seconds
+GFLOPs: 7.32
+Total Operations: 10612080000
+Stencil Size: 51 nodes
+Node Type: chebyshev

@@ -1,0 +1,13 @@
+=== SIMULATION PARAMETERS ===
+Method: MxV (Matrix-Vector) on CPU
+Temporal Scheme: RK4
+Precision: Float32
+Grid Size: 200 x 200
+Time Step: 5.0e-5
+Total Steps: 20000
+Total Time: 1.0
+Execution Time: 110.7 seconds
+GFLOPs: 23.47
+Total Operations: 2598592320000
+Stencil Size: 201 nodes
+Node Type: chebyshev

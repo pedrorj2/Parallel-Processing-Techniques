@@ -9,7 +9,7 @@ include("../1_annexes/system_info.jl")
 # --------------------------------------------------------
 
 # Set to true to save the plot as a file, false to display it in Julia
-save_plot = false
+save_plot = true
 
 # --------------------------------------------------------
 # Interactive prompts for user input
@@ -28,17 +28,17 @@ else
 end
 
 println("\nChoose matrix size range:")
-println("1. 50:50:1000")
+println("1. 50:50:2000")
 println("2. 5:5:60 (for low N)")
 choice_range = parse(Int, readline())
 if choice_range == 1
-    Ns = 50:50:1000
+    Ns = 50:50:2000
     file_suffix = ""
 elseif choice_range == 2
     Ns = 20:20:300
     file_suffix = "_lowN"
 else
-    error("Invalid choice. Please select 1 (50:50:2000) or 2 (5:5:60).")
+    error("Invalid choice. Please select 1 (50:50:2000) or 2 (20:20:300).")
 end
 
 N_cores     = num_physical_cores()
@@ -196,12 +196,12 @@ Ns_vec = collect(Ns)
 # --------------------------------------------------------
 default(
     markerstrokewidth=0,
-    legendfontsize=12,
-    margins=5mm,
-    xtickfont=font(12, "sans-serif", :black, rotation=0),
-    ytickfont=font(12, "sans-serif", :black, rotation=0),
-    xguidefont=font(12, "sans-serif", :black, rotation=0),
-    yguidefont=font(12, "sans-serif", :black, rotation=0)
+    legendfontsize=14,
+    margins=10mm,
+    xtickfont=font(14, "sans-serif", :black, rotation=0),
+    ytickfont=font(14, "sans-serif", :black, rotation=0),
+    xguidefont=font(14, "sans-serif", :black, rotation=0),
+    yguidefont=font(14, "sans-serif", :black, rotation=0)
 )
 
 mkpath("figures/3_cpu/tcpu_tmemory")
@@ -210,41 +210,41 @@ mkpath("figures/3_cpu/tcpu_tmemory")
 y_max_mxm = maximum(vcat(t_cpu_theo_mxm, t_mem_theo_mxm, t_cpu_measured_mxm, t_mem_measured_mxm)) * 1.15
 
 p_mxm = plot(
-    Ns_vec, t_cpu_theo_mxm, label="t_cpu_theo", lw=1, color=:black,
+    Ns_vec, t_cpu_theo_mxm, label="t_cpu_theo", lw=2, linestyle=:solid, color=:blue,
     xlabel="Matrix size N", ylabel="Time (ns)", legend=:topleft,
-    ylims=(0, y_max_mxm), grid=true, size=(1200, 600),
-    xtickfont=font(12, "sans-serif", :black, rotation=0),
-    ytickfont=font(12, "sans-serif", :black, rotation=0),
-    xguidefont=font(12, "sans-serif", :black, rotation=0),
-    yguidefont=font(12, "sans-serif", :black, rotation=0)
+    ylims=(0, y_max_mxm), grid=true, size=(1600, 800),
+    xtickfont=font(14, "sans-serif", :black, rotation=0),
+    ytickfont=font(14, "sans-serif", :black, rotation=0),
+    xguidefont=font(14, "sans-serif", :black, rotation=0),
+    yguidefont=font(14, "sans-serif", :black, rotation=0)
 )
-plot!(p_mxm, Ns_vec, t_mem_theo_mxm, label="t_mem_theo", lw=1, linestyle=:dash, color=:black)
-plot!(p_mxm, Ns_vec, t_cpu_measured_mxm, label="t_cpu_measured", lw=1, marker=:circle, color=:blue)
-plot!(p_mxm, Ns_vec, t_mem_measured_mxm, label="t_mem_measured", lw=1, linestyle=:dash, marker=:circle, color=:blue)
+plot!(p_mxm, Ns_vec, t_mem_theo_mxm, label="t_mem_theo", lw=2, linestyle=:solid, color=:red)
+plot!(p_mxm, Ns_vec, t_cpu_measured_mxm, label="t_cpu_measured", lw=2, linestyle=:dash, marker=:circle, color=:blue)
+plot!(p_mxm, Ns_vec, t_mem_measured_mxm, label="t_mem_measured", lw=2, linestyle=:dash, marker=:circle, color=:red)
 
 # ---------- MxV: Theory vs Real ----------
 y_max_mxv = maximum(vcat(t_cpu_theo_mxv, t_mem_theo_mxv, t_cpu_measured_mxv, t_mem_measured_mxv)) * 1.25
 
 p_mxv = plot(
-    Ns_vec, t_cpu_theo_mxv, label="t_cpu_theo", lw=1, color=:black,
+    Ns_vec, t_cpu_theo_mxv, label="t_cpu_theo", lw=2, linestyle=:solid, color=:green,
     xlabel="Matrix size N", ylabel="Time (ns)", legend=:topleft,
-    ylims=(0, y_max_mxv), grid=true, size=(1200, 600),
+    ylims=(0, y_max_mxv), grid=true, size=(1600, 800),
     xtickfont=font(12, "sans-serif", :black, rotation=0),
     ytickfont=font(12, "sans-serif", :black, rotation=0),
     xguidefont=font(12, "sans-serif", :black, rotation=0),
     yguidefont=font(12, "sans-serif", :black, rotation=0)
 )
-plot!(p_mxv, Ns_vec, t_mem_theo_mxv, label="t_mem_theo", lw=1, linestyle=:dash, color=:black)
-plot!(p_mxv, Ns_vec, t_cpu_measured_mxv, label="t_cpu_measured", lw=1, marker=:circle, color=:green)
-plot!(p_mxv, Ns_vec, t_mem_measured_mxv, label="t_mem_measured", lw=1, linestyle=:dash, marker=:circle, color=:green)
+plot!(p_mxv, Ns_vec, t_mem_theo_mxv, label="t_mem_theo", lw=2, linestyle=:solid, color=:red)
+plot!(p_mxv, Ns_vec, t_cpu_measured_mxv, label="t_cpu_measured", lw=2, linestyle=:dash, marker=:circle, color=:green)
+plot!(p_mxv, Ns_vec, t_mem_measured_mxv, label="t_mem_measured", lw=2, linestyle=:dash, marker=:circle, color=:red)
 
 # Display or save the plots based on save_plot
 if save_plot
-    savefig(p_mxm, "figures/3_cpu/tcpu_tmemory/$(T)_MXM_Ryzen5_5600X$file_suffix.png")
-    savefig(p_mxv, "figures/3_cpu/tcpu_tmemory/$(T)_MXV_Ryzen5_5600X$file_suffix.png")
+    savefig(p_mxm, "figures/3_cpu/tcpu_tmemory/presentacion$(T)_MXM_Ryzen5_5600X$file_suffix.png")
+    savefig(p_mxv, "figures/3_cpu/tcpu_tmemory/presentacion$(T)_MXV_Ryzen5_5600X$file_suffix.png")
     println("Saved figures:")
-    println("  - figures/3_cpu/tcpu_tmemory/$(T)_MXM_Ryzen5_5600X$file_suffix.png")
-    println("  - figures/3_cpu/tcpu_tmemory/$(T)_MXV_Ryzen5_5600X$file_suffix.png")
+    println("  - figures/3_cpu/tcpu_tmemory/presentacion$(T)_MXM_Ryzen5_5600X$file_suffix.png")
+    println("  - figures/3_cpu/tcpu_tmemory/presentacion$(T)_MXV_Ryzen5_5600X$file_suffix.png")
 else
     display(p_mxm)
     display(p_mxv)

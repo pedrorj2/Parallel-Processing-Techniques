@@ -127,13 +127,12 @@ function get_wave_equation_solvers_options()
     [
         (1, "Laplacian Benchmark"),
         ("", ""),  # Empty line separator
-        (2, "Wave 1D MxV Benchmark"),
-        (3, "Wave 2D MxM Benchmark"),
-        (4, "Wave 2D MxV Benchmark"),
+        (2, "Wave 2D MxM Benchmark"),
+        (3, "Wave 2D MxV Benchmark"),
         ("", ""),  # Empty line separator
-        (5, "Wave 1D MxV Animation (Nx=25) (26 nodes)"),
-        (6, "Wave 2D MxM Animation (Nx=25, Ny=25) (26 nodes)"),
-        (7, "Wave 2D MxV Animation (Nx=25, Ny=25) (26 nodes)"),
+        (4, "Wave 1D MxV Animation (Nx=25) (26 nodes)"),
+        (5, "Wave 2D MxM Animation (Nx=25, Ny=25) (26 nodes)"),
+        (6, "Wave 2D MxV Animation (Nx=25, Ny=25) (26 nodes)"),
         ("", ""),  # Empty line separator
         (0, "Back to Main Menu (0 or Enter)")
     ]
@@ -337,12 +336,11 @@ end
 function execute_wave_equation_solvers_option(option)
     paths = Dict(
         1 => "code/8_wave_equation_solvers/benchmark_laplacian.jl",
-        2 => "code/8_wave_equation_solvers/benchmark_versions/wave1D_benchmark.jl",
-        3 => "code/8_wave_equation_solvers/benchmark_versions/wave2D_MxM_benchmark.jl",
-        4 => "code/8_wave_equation_solvers/benchmark_versions/wave2D_MxV_benchmark.jl",
-        5 => "code/8_wave_equation_solvers/animation_versions/wave1D.jl",
-        6 => "code/8_wave_equation_solvers/animation_versions/wave2D_MxM.jl",
-        7 => "code/8_wave_equation_solvers/animation_versions/wave2D_MxV.jl"
+        2 => "code/8_wave_equation_solvers/optimized_versions/wave2D_MxM_schemes_optimized.jl",
+        3 => "code/8_wave_equation_solvers/optimized_versions/wave2D_MxV_schemes_optimized.jl",
+        4 => "code/8_wave_equation_solvers/animation_versions/wave1D.jl",
+        5 => "code/8_wave_equation_solvers/animation_versions/wave2D_MxM.jl",
+        6 => "code/8_wave_equation_solvers/animation_versions/wave2D_MxV.jl"
     )
     if option == 0 || option === nothing
         println()

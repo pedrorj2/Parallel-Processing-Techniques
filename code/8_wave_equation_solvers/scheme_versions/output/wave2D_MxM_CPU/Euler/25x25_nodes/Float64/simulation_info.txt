@@ -1,0 +1,13 @@
+=== SIMULATION PARAMETERS ===
+Method: MxM (Matrix-Matrix) on CPU
+Temporal Scheme: Euler
+Precision: Float64
+Grid Size: 25 x 25
+Time Step: 4.000000000000001e-6
+Total Steps: 249999
+Total Time: 0.9999960000000002
+Execution Time: 5.88 seconds
+GFLOPs: 2.99
+Total Operations: 17575929696
+Stencil Size: 26 nodes
+Node Type: chebyshev

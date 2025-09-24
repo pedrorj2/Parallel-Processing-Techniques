@@ -1,5 +1,7 @@
 # File: 8_wave_equation_solvers/animation_versions/wave2D_MxM.jl
 
+# These versions are the original version with Explicit Euler scheme and with 0 to N indexing for the spatial dimension.
+
 using Printf
 using Plots
 using OffsetArrays
