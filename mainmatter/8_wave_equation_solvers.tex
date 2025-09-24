@@ -216,20 +216,20 @@ The solver captures correct wave physics across all stable configurations. Using
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/state_t_0.25.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/state_t_0.25.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/state_t_0.50.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/state_t_0.50.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/state_t_0.75.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/state_t_0.75.png}
 
 \vspace{1em}
 
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/state_t_1.00.png}
 
 \caption{\textbf{1D Wave Equation Evolution.} The temporal sequence shows: (top left) initial Gaussian pulse centered at x = 0.5, (top right) wave splitting into counter-propagating components, (middle left) reflection at Dirichlet boundaries, (middle right) wave interference during convergence, and (bottom) final standing wave configuration. Blue circles indicate the 26 Chebyshev node positions where the discrete solution is computed.}
 \end{figure}
@@ -244,20 +244,20 @@ The Chebyshev node distribution enables high-quality Lagrange interpolation to r
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/interpolated_state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/interpolated_state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/interpolated_state_t_0.25.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/interpolated_state_t_0.25.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/interpolated_state_t_0.50.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/interpolated_state_t_0.50.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/interpolated_state_t_0.75.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/interpolated_state_t_0.75.png}
 
 \vspace{1em}
 
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output1D_25_benchmark/interpolated_state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output1D_25_benchmark/interpolated_state_t_1.00.png}
 
 \caption{\textbf{1D Wave Equation Evolution (Fine Grid).} The continuous curves demonstrate the high accuracy of Lagrange interpolation from the optimal Chebyshev node distribution (blue circles) to a fine equispaced grid of 100 points.}
 \end{figure}
@@ -497,15 +497,15 @@ The 2D solver captures complete wave physics on Chebyshev node grids. Using 25×
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/state_t_0.33.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/state_t_0.33.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/state_t_0.66.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/state_t_0.66.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/state_t_1.00.png}
 
 \caption{\textbf{2D Wave Equation Evolution.} The temporal sequence shows: (top left) initial Gaussian pulse centered at domain center, (top right) radial wave expansion at t=0.33s, (bottom left) complex interference patterns at t=0.66s, and (bottom right) final standing wave configuration with multiple nodes at t=1.0s. The discrete solution is computed on a 26×26 Chebyshev node grid.}
 \end{figure}
@@ -518,15 +518,15 @@ The 2D Chebyshev node distribution enables high-quality tensor-product Lagrange 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/interpolated_state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/interpolated_state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/interpolated_state_t_0.33.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/interpolated_state_t_0.33.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/interpolated_state_t_0.66.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/interpolated_state_t_0.66.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxM_benchmark/interpolated_state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxM_benchmark/interpolated_state_t_1.00.png}
 
 \caption{\textbf{2D Wave Equation Evolution. (Fine Grid)} The smooth contours demonstrate excellent interpolation accuracy from the optimal 26×26 Chebyshev node distribution to a fine 100×100 equispaced visualization grid. The tensor-product interpolation preserves wave symmetry and captures fine-scale interference patterns throughout the temporal evolution.}
 \end{figure}
@@ -694,15 +694,15 @@ The 2D solver captures complete wave physics on Chebyshev node grids. Using 25×
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/state_t_0.33.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/state_t_0.33.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/state_t_0.66.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/state_t_0.66.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/state_t_1.00.png}
 
 \caption{\textbf{2D Wave Equation Evolution.} The temporal sequence shows: (top left) initial Gaussian pulse centered at domain center, (top right) radial wave expansion at t=0.33s, (bottom left) complex interference patterns at t=0.66s, and (bottom right) final standing wave configuration with multiple nodes at t=1.0s. The discrete solution is computed on a 26×26 Chebyshev node grid.}
 \end{figure}
@@ -715,15 +715,15 @@ The 2D Chebyshev node distribution enables high-quality tensor-product Lagrange 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/interpolated_state_t_0.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/interpolated_state_t_0.00.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/interpolated_state_t_0.33.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/interpolated_state_t_0.33.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/interpolated_state_t_0.66.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/interpolated_state_t_0.66.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/output2D_25_MxV_benchmark/interpolated_state_t_1.00.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/output2D_25_MxV_benchmark/interpolated_state_t_1.00.png}
 
 \caption{\textbf{2D Wave Equation Evolution (Fine Grid).} The smooth contours demonstrate excellent interpolation accuracy from the optimal 26×26 Chebyshev node distribution to a fine 100×100 equispaced visualization grid. The tensor-product interpolation preserves wave symmetry and captures fine-scale interference patterns throughout the temporal evolution.}
 \end{figure}
@@ -777,15 +777,15 @@ The 2D wave equation solver demonstrates complete wave physics on a 26×26 Cheby
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/fortran2D_benchmark/t0.0.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/fortran2D_benchmark/t0.0.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/fortran2D_benchmark/t0.33.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/fortran2D_benchmark/t0.33.png}
 
 \vspace{1em}
 
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/fortran2D_benchmark/t0.66.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/fortran2D_benchmark/t0.66.png}
 \hfill
-\includegraphics[width=0.48\textwidth]{code/8_wave_equation_solvers/benchmark_versions/output/fortran2D_benchmark/t1.0.png}
+\includegraphics[width=0.48\textwidth]{figures/8_wave_equation_solvers/output/fortran2D_benchmark/t1.0.png}
 
 \caption{\textbf{2D Wave Equation Evolution.} Numerical solution of the 2D wave equation implemented in NumericalHub and visualized using the plot\_contour function.}
 \end{figure}
